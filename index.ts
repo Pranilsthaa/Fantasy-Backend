@@ -1,1 +1,1 @@
-console.log("Hello via index.ts");
+console.log("Hello v");
