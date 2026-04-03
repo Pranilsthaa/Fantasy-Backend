@@ -6,3 +6,5 @@ export const teams = pgTable('teams', {
     name: varchar("name").notNull().unique(),
     logo: varchar("logo").notNull()
 })
+export type Team = typeof teams.$inferSelect;
+export type NewTeam = typeof teams.$inferInsert;
