@@ -5,6 +5,7 @@ import 'dotenv/config'
 export * from "./users";
 export * from './players';
 export * from './teams';
+export * from './matches';
 
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL env var required');

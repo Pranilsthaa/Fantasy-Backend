@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "start": "bun --hot ./src/server",
-    "db:seed": "bun ./src/db/seed.ts"
+    "db:seed": "bun ./src/db/seed.ts",
+    "db:migrate": "bunx drizzle-kit migrate",
+    "db:generateMigration": "bunx drizzle-kit generate"
   },
   "devDependencies": {
     "@types/bun": "latest",

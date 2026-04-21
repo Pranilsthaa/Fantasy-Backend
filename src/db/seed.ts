@@ -1,6 +1,6 @@
-import { db, teams, players, users } from './index';
+import { db, teams, players, users, matches } from './index';
 import { exit } from 'process';
-import { eq, or } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 async function seed() {
   console.log('🌱 Seeding database...');
@@ -92,8 +92,42 @@ async function seed() {
       }
     ];
 
+
     for (const userData of usersToInsert) {
         await db.insert(users).values(userData).onConflictDoNothing();
+    }
+
+    //4. Seed matches
+    console.log('  Inserting matches...');
+    const matchesToInsert = [
+      {
+        matchNumber: 1,
+        team1_id: teamMap["MI"]!,
+        team2_id: teamMap["CSK"]!,
+        venue: "Wankhede Stadium",
+        date: new Date("2026-04-22T19:30:00Z"),
+        status: "upcoming" as const,
+      },
+      {
+        matchNumber: 2,
+        team1_id: teamMap["RCB"]!,
+        team2_id: teamMap["MI"]!,
+        venue: "M. Chinnaswamy Stadium",
+        date: new Date("2026-04-23T19:30:00Z"),
+        status: "upcoming" as const,
+      },
+      {
+        matchNumber: 3,
+        team1_id: teamMap["CSK"]!,
+        team2_id: teamMap["RCB"]!,
+        venue: "Chepauk Stadium",
+        date: new Date("2026-04-24T19:30:00Z"),
+        status: "upcoming" as const,
+      }
+    ];
+
+    for (const matchData of matchesToInsert) {
+      await db.insert(matches).values(matchData).onConflictDoNothing();
     }
 
     console.log('✅ Seeding completed successfully!');

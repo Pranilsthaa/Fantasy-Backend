@@ -8,6 +8,13 @@
       "when": 1775128474588,
       "tag": "0000_sticky_harry_osborn",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776764531771,
+      "tag": "0001_faulty_spacker_dave",
+      "breakpoints": true
     }
   ]
 }
