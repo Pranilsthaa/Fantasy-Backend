@@ -2,6 +2,7 @@ import express, { type Request, type Response } from "express";
 import os from 'os'
 import { logger } from "./utils/logger";
 import { db, players, teams } from "./db";
+import { playerRouter } from "./module/players/players.route";
 
 const app = express();
 const port = 3001;
@@ -22,6 +23,9 @@ function getLocalIP() {
 }
 
 app.use(logger)
+app.use(express.json())
+
+app.use("/api/players", playerRouter);
 
 app.get("/", (req: Request, res: Response) => {
     res.send("Fantasy API is running");

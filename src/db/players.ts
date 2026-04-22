@@ -1,5 +1,6 @@
 import { boolean, integer, pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 import { teams } from "./teams";
+import { relations } from "drizzle-orm";
 
 export const player_role_enum = pgEnum("roles", ['Batter', 'Bowler', 'All Rounder', 'Wicket Keeper'])
 
@@ -16,3 +17,10 @@ export const players = pgTable("players", {
 })
 export type Player = typeof players.$inferSelect;
 export type NewPlayer = typeof players.$inferInsert;
+
+export const playerRelations = relations(players, ({ one }) => ({
+    team: one(teams, {
+        fields: [players.team_id],
+        references: [teams.id],
+    }),
+}));
