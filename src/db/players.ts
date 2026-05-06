@@ -2,7 +2,7 @@ import { boolean, integer, pgEnum, pgTable, timestamp, uuid, varchar } from "dri
 import { teams } from "./teams";
 import { relations } from "drizzle-orm";
 
-export const player_role_enum = pgEnum("roles", ['Batter', 'Bowler', 'All Rounder', 'Wicket Keeper'])
+export const player_role_enum = pgEnum("roles", ['BAT', 'BWL', 'AR', 'WK'])
 
 export const players = pgTable("players", {
     id: uuid('id').primaryKey().defaultRandom(),

@@ -38,45 +38,45 @@ async function seed() {
     console.log('  Inserting players...');
     const playersToInsert = [
       // MI
-      { name: "Rohit Sharma",       age: "37", price: 100, role: "Batter"        as const, team_id: teamMap["MI"]!,   isActive: true },
-      { name: "Jasprit Bumrah",     age: "30", price: 95,  role: "Bowler"        as const, team_id: teamMap["MI"]!,   isActive: true },
-      { name: "Hardik Pandya",      age: "30", price: 85,  role: "All Rounder"    as const, team_id: teamMap["MI"]!,   isActive: true },
+      { name: "Rohit Sharma",       age: "37", price: 10, role: "BAT"        as const, team_id: teamMap["MI"]!,   isActive: true },
+      { name: "Jasprit Bumrah",     age: "30", price: 9.5,  role: "BWL"        as const, team_id: teamMap["MI"]!,   isActive: true },
+      { name: "Hardik Pandya",      age: "30", price: 8.5,  role: "AR"    as const, team_id: teamMap["MI"]!,   isActive: true },
       // CSK
-      { name: "MS Dhoni",           age: "42", price: 90,  role: "Wicket Keeper"  as const, team_id: teamMap["CSK"]!,  isActive: true },
-      { name: "Ruturaj Gaikwad",    age: "27", price: 75,  role: "Batter"        as const, team_id: teamMap["CSK"]!,  isActive: true },
-      { name: "Ravindra Jadeja",    age: "35", price: 80,  role: "All Rounder"    as const, team_id: teamMap["CSK"]!,  isActive: true },
+      { name: "MS Dhoni",           age: "42", price: 9.0,  role: "WK"  as const, team_id: teamMap["CSK"]!,  isActive: true },
+      { name: "Ruturaj Gaikwad",    age: "27", price: 7.5,  role: "BAT"        as const, team_id: teamMap["CSK"]!,  isActive: true },
+      { name: "Ravindra Jadeja",    age: "35", price: 8.0,  role: "AR"    as const, team_id: teamMap["CSK"]!,  isActive: true },
       // RCB
-      { name: "Virat Kohli",        age: "35", price: 99,  role: "Batter"        as const, team_id: teamMap["RCB"]!,  isActive: true },
-      { name: "Faf du Plessis",     age: "39", price: 70,  role: "Batter"        as const, team_id: teamMap["RCB"]!,  isActive: true },
-      { name: "Mohammed Siraj",     age: "30", price: 65,  role: "Bowler"        as const, team_id: teamMap["RCB"]!,  isActive: true },
+      { name: "Virat Kohli",        age: "35", price: 9.9,  role: "BAT"        as const, team_id: teamMap["RCB"]!,  isActive: true },
+      { name: "Faf du Plessis",     age: "39", price: 7.0,  role: "BAT"        as const, team_id: teamMap["RCB"]!,  isActive: true },
+      { name: "Mohammed Siraj",     age: "30", price: 6.5,  role: "BWL"        as const, team_id: teamMap["RCB"]!,  isActive: true },
       // KKR
-      { name: "Shreyas Iyer",       age: "29", price: 78,  role: "Batter"        as const, team_id: teamMap["KKR"]!,  isActive: true },
-      { name: "Andre Russell",      age: "35", price: 88,  role: "All Rounder"    as const, team_id: teamMap["KKR"]!,  isActive: true },
-      { name: "Sunil Narine",       age: "35", price: 82,  role: "All Rounder"    as const, team_id: teamMap["KKR"]!,  isActive: true },
+      { name: "Shreyas Iyer",       age: "29", price: 7.8,  role: "BAT"        as const, team_id: teamMap["KKR"]!,  isActive: true },
+      { name: "Andre Russell",      age: "35", price: 8.8,  role: "AR"    as const, team_id: teamMap["KKR"]!,  isActive: true },
+      { name: "Sunil Narine",       age: "35", price: 8.2,  role: "AR"    as const, team_id: teamMap["KKR"]!,  isActive: true },
       // DC
-      { name: "David Warner",       age: "37", price: 72,  role: "Batter"        as const, team_id: teamMap["DC"]!,   isActive: true },
-      { name: "Axar Patel",         age: "30", price: 68,  role: "All Rounder"    as const, team_id: teamMap["DC"]!,   isActive: true },
-      { name: "Kuldeep Yadav",      age: "29", price: 65,  role: "Bowler"        as const, team_id: teamMap["DC"]!,   isActive: true },
+      { name: "David Warner",       age: "37", price: 7.2,  role: "BAT"        as const, team_id: teamMap["DC"]!,   isActive: true },
+      { name: "Axar Patel",         age: "30", price: 6.8,  role: "AR"    as const, team_id: teamMap["DC"]!,   isActive: true },
+      { name: "Kuldeep Yadav",      age: "29", price: 6.5,  role: "BWL"        as const, team_id: teamMap["DC"]!,   isActive: true },
       // PBKS
-      { name: "Shikhar Dhawan",     age: "38", price: 60,  role: "Batter"        as const, team_id: teamMap["PBKS"]!, isActive: true },
-      { name: "Sam Curran",         age: "25", price: 74,  role: "All Rounder"    as const, team_id: teamMap["PBKS"]!, isActive: true },
-      { name: "Arshdeep Singh",     age: "25", price: 66,  role: "Bowler"        as const, team_id: teamMap["PBKS"]!, isActive: true },
+      { name: "Shikhar Dhawan",     age: "38", price: 6.0,  role: "BAT"        as const, team_id: teamMap["PBKS"]!, isActive: true },
+      { name: "Sam Curran",         age: "25", price: 7.4,  role: "AR"    as const, team_id: teamMap["PBKS"]!, isActive: true },
+      { name: "Arshdeep Singh",     age: "25", price: 6.6,  role: "BWL"        as const, team_id: teamMap["PBKS"]!, isActive: true },
       // RR
-      { name: "Sanju Samson",       age: "29", price: 80,  role: "Wicket Keeper"  as const, team_id: teamMap["RR"]!,   isActive: true },
-      { name: "Jos Buttler",        age: "33", price: 85,  role: "Wicket Keeper"  as const, team_id: teamMap["RR"]!,   isActive: true },
-      { name: "Yuzvendra Chahal",   age: "33", price: 70,  role: "Bowler"        as const, team_id: teamMap["RR"]!,   isActive: true },
+      { name: "Sanju Samson",       age: "29", price: 8.0,  role: "WK"  as const, team_id: teamMap["RR"]!,   isActive: true },
+      { name: "Jos Buttler",        age: "33", price: 8.5,  role: "WK"  as const, team_id: teamMap["RR"]!,   isActive: true },
+      { name: "Yuzvendra Chahal",   age: "33", price: 7.0,  role: "BWL"        as const, team_id: teamMap["RR"]!,   isActive: true },
       // SRH
-      { name: "Pat Cummins",        age: "30", price: 87,  role: "Bowler"        as const, team_id: teamMap["SRH"]!,  isActive: true },
-      { name: "Heinrich Klaasen",   age: "32", price: 76,  role: "Wicket Keeper"  as const, team_id: teamMap["SRH"]!,  isActive: true },
-      { name: "Travis Head",        age: "30", price: 83,  role: "Batter"        as const, team_id: teamMap["SRH"]!,  isActive: true },
+      { name: "Pat Cummins",        age: "30", price: 8.7,  role: "BWL"        as const, team_id: teamMap["SRH"]!,  isActive: true },
+      { name: "Heinrich Klaasen",   age: "32", price: 7.6,  role: "WK"  as const, team_id: teamMap["SRH"]!,  isActive: true },
+      { name: "Travis Head",        age: "30", price: 8.3,  role: "BAT"        as const, team_id: teamMap["SRH"]!,  isActive: true },
       // GT
-      { name: "Shubman Gill",       age: "24", price: 84,  role: "Batter"        as const, team_id: teamMap["GT"]!,   isActive: true },
-      { name: "Rashid Khan",        age: "25", price: 91,  role: "Bowler"        as const, team_id: teamMap["GT"]!,   isActive: true },
-      { name: "Mohammed Shami",     age: "33", price: 79,  role: "Bowler"        as const, team_id: teamMap["GT"]!,   isActive: true },
+      { name: "Shubman Gill",       age: "24", price: 8.4,  role: "BAT"        as const, team_id: teamMap["GT"]!,   isActive: true },
+      { name: "Rashid Khan",        age: "25", price: 9.1,  role: "BWL"        as const, team_id: teamMap["GT"]!,   isActive: true },
+      { name: "Mohammed Shami",     age: "33", price: 7.9,  role: "BWL"        as const, team_id: teamMap["GT"]!,   isActive: true },
       // LSG
-      { name: "KL Rahul",           age: "31", price: 86,  role: "Wicket Keeper"  as const, team_id: teamMap["LSG"]!,  isActive: true },
-      { name: "Nicholas Pooran",    age: "28", price: 73,  role: "Wicket Keeper"  as const, team_id: teamMap["LSG"]!,  isActive: true },
-      { name: "Ravi Bishnoi",       age: "23", price: 62,  role: "Bowler"        as const, team_id: teamMap["LSG"]!,  isActive: true },
+      { name: "KL Rahul",           age: "31", price: 8.6,  role: "WK"  as const, team_id: teamMap["LSG"]!,  isActive: true },
+      { name: "Nicholas Pooran",    age: "28", price: 7.3,  role: "WK"  as const, team_id: teamMap["LSG"]!,  isActive: true },
+      { name: "Ravi Bishnoi",       age: "23", price: 6.2,  role: "BWL"        as const, team_id: teamMap["LSG"]!,  isActive: true },
     ];
 
     for (const playerData of playersToInsert) {
