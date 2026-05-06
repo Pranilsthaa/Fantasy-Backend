@@ -1,5 +1,6 @@
 import { integer, pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 import { teams } from "./teams";
+import { relations } from "drizzle-orm";
 
 export const matchStatusEnum = pgEnum('match_status', [
   'upcoming',   // Not yet started, substitutions open
@@ -18,3 +19,14 @@ export const matches = pgTable('matches', {
     date: timestamp("date", {withTimezone: true}).notNull(),
     status: matchStatusEnum("status").notNull().default('upcoming'),
 })
+
+export const matchesRelations = relations(matches, ({one}) => ({
+    team1: one(teams, {
+        fields: [matches.team1_id],
+        references: [teams.id],
+    }),
+    team2: one(teams, {
+        fields: [matches.team2_id],
+        references: [teams.id],
+    }),
+}));

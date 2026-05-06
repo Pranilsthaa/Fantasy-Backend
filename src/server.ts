@@ -3,6 +3,7 @@ import os from 'os'
 import { logger } from "./utils/logger";
 import { db, players, teams } from "./db";
 import { playerRouter } from "./module/players/players.route";
+import { matchesRouter } from "./module/matches/matches.route";
 
 const app = express();
 const port = 3001;
@@ -26,6 +27,7 @@ app.use(logger)
 app.use(express.json())
 
 app.use("/api/players", playerRouter);
+app.use("/api/matches", matchesRouter);
 
 app.get("/", (req: Request, res: Response) => {
     res.send("Fantasy API is running");
