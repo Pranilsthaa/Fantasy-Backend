@@ -125,3 +125,22 @@ player, root and health endpoints remain explicitly public.
 
 See [authentication](docs/authentication.md) for payloads, client behavior,
 validation, token/session policy, rate limits, permissions and test coverage.
+
+## API documentation (Swagger)
+
+Start the server with `bun run start:dev` or `bun start`, then open:
+
+- Swagger UI: [http://localhost:3001/api/docs](http://localhost:3001/api/docs)
+- OpenAPI JSON: [http://localhost:3001/api/docs-json](http://localhost:3001/api/docs-json)
+
+Use your configured `PORT` if different. The documentation includes every existing
+endpoint, request/response schemas, validation rules, status codes and rate limits.
+It works in both Bun source mode and the compiled app. No extra service or database
+migration is required.
+
+To try authenticated requests, register or log in under **Authentication**, copy
+`accessToken`, click **Authorize**, and paste it without the `Bearer` prefix.
+Refresh/logout use the latest `refreshToken` in their request body. Swagger does
+not persist authorization across reloads. Its UI and JSON specification are public;
+API authentication remains enforced independently. **Try it out** sends real
+requests to the running server, including account creation and session changes.

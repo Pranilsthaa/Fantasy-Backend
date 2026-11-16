@@ -216,3 +216,42 @@ is version 5, while the existing configuration contained a TypeScript-6-only
 `ignoreDeprecations` setting. Removing that setting aligned the configuration
 with the declared compiler. Dependency installation required sandbox escalation
 for Bun's temporary cache. No remaining build, test or runtime failures.
+
+## Swagger checkpoint — 2026-11-16
+
+Added `/api/docs` (Swagger UI) and `/api/docs-json` (OpenAPI JSON), covering all
+nine current operations with explicit Bun-compatible request and response schemas.
+Bearer authorization is documented for the profile; public routes stay public.
+The documentation includes validation rules, error statuses and rate limits.
+Swagger does not persist authorization between reloads.
+
+```text
+$ npm run build
+> tsc -p tsconfig.build.json
+(exit 0)
+
+$ bun run typecheck
+$ tsc --noEmit
+(exit 0)
+
+$ bun test test/swagger.e2e.test.ts test/auth.e2e.test.ts test/app.e2e.test.ts
+46 pass
+0 fail
+147 expect() calls
+```
+
+The five documentation tests cover UI/assets, all operation paths, explicit body
+schemas in Bun source mode, JWT/public access declarations, nested response
+models and exclusion of persistence secrets. The compiled runtime smoke check
+also verifies the UI and OpenAPI JSON over HTTP. No database migration was needed.
+
+The existing TypeScript-6-only deprecation setting was again incompatible with
+the declared and installed TypeScript 5 compiler; it was removed to keep builds
+working. Both npm and Bun lockfiles were synchronized.
+
+The install audit surfaced existing Express transitive vulnerabilities. Compatible
+constraints now select body-parser 2.4.0+, proxy-addr 2.0.8+, and qs 6.17.1+.
+The final npm audit reported four moderate development-tooling findings through
+Drizzle Kit's legacy esbuild loader chain; no high or critical findings remain.
+The suggested automatic Drizzle fix crosses a major-version boundary and was not
+applied during Swagger setup. These tooling findings remain for separate review.

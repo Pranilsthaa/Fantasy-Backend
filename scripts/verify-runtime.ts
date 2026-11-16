@@ -46,6 +46,13 @@ async function verify() {
         console.log(`GET ${path} -> 200 success=true rows=${body.data.length}`);
       }
     }
+    const docs = await fetch(`${origin}/api/docs`);
+    if (docs.status !== 200 || !(await docs.text()).includes('Local Fantasy API Documentation')) throw new Error('Swagger UI failed');
+    const spec = await fetch(`${origin}/api/docs-json`);
+    const openapi = await spec.json() as { paths?: Record<string, unknown> };
+    if (spec.status !== 200 || !openapi.paths?.['/api/auth/me']) throw new Error('OpenAPI document failed');
+    console.log('GET /api/docs -> 200 Swagger UI');
+    console.log('GET /api/docs-json -> 200 OpenAPI document');
     const profile = await fetch(`${origin}/api/auth/me`);
     if (profile.status !== 401) throw new Error('Profile accepted an anonymous request');
     console.log('GET /api/auth/me (anonymous) -> 401');

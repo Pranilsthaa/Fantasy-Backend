@@ -139,3 +139,23 @@ provider or Neon Auth service was enabled. See `docs/authentication.md`.
   login, token-family replay revocation and all-device logout. Clients must
   serialize refresh/logout and retain the latest refresh credential. Matching
   an email alone must not authorize invitation claims before verification exists.
+
+## Swagger documentation checkpoint
+
+- Swagger UI: `/api/docs`; OpenAPI JSON: `/api/docs-json`.
+- NestJS 11-compatible Swagger package. Setup is in
+  `src/documentation/swagger.ts`, called by `src/main.ts`.
+- Documented all nine existing API operations with tags, request/response models,
+  validation constraints, status codes, rate limits and JWT bearer authorization.
+- Explicit property/body/response metadata supports Bun source mode and the
+  compiled app. No real credentials or internal persistence fields are in schemas.
+- UI/spec are public; protected API operations retain the JWT guard. Users enter
+  an access token through Authorize; authorization is not persisted on reload.
+- Documentation tests verify UI/assets, schemas, all operation paths, bearer
+  requirements and private-field exclusion. Schema additions need no DB migration.
+- See README for access instructions and `docs/verification.md` for final checks.
+- Verification: 46 Swagger/auth/API tests pass, along with build, typecheck and
+  compiled runtime documentation checks. No live data was written.
+- Compatible Express dependency patch constraints clear the install audit's high
+  and critical findings. Four moderate Drizzle development-tooling findings remain;
+  a suggested major-version change was left for separate review.
