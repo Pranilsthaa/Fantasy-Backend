@@ -10,13 +10,14 @@ import { DatabaseService } from '../src/database/database.service';
 describe('Fantasy API', () => {
   let app: INestApplication;
   let baseUrl: string;
+  const execute = mock(async (_query: unknown): Promise<unknown> => ({ rows: [{ value: 1 }] }));
   const findPlayers = mock(async (_options: unknown): Promise<unknown[]> => []);
   const findMatches = mock(async (_options: unknown): Promise<unknown[]> => []);
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(DatabaseService)
-      .useValue({ db: { query: {
+      .useValue({ db: { execute, query: {
         players: { findMany: findPlayers },
         matches: { findMany: findMatches },
       } } })
@@ -27,6 +28,8 @@ describe('Fantasy API', () => {
   });
 
   beforeEach(() => {
+    execute.mockReset();
+    execute.mockResolvedValue({ rows: [{ value: 1 }] });
     findPlayers.mockReset();
     findMatches.mockReset();
     findPlayers.mockResolvedValue([]);
@@ -41,6 +44,19 @@ describe('Fantasy API', () => {
     const response = await fetch(baseUrl);
     expect(response.status).toBe(200);
     expect(await response.text()).toBe('Fantasy API is running');
+  });
+
+  it('checks database readiness', async () => {
+    const response = await fetch(`${baseUrl}/health/database`);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ status: 'ok', database: 'connected' });
+  });
+
+  it('returns 503 when the database is unavailable', async () => {
+    execute.mockImplementationOnce(async () => { throw new Error('private connection details'); });
+    const response = await fetch(`${baseUrl}/health/database`);
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ status: 'error', database: 'unavailable' });
   });
 
   it('returns 404 for an unknown route', async () => {

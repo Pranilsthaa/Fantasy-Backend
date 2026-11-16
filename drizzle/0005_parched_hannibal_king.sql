@@ -1,0 +1,3 @@
+ALTER TABLE "scoring_runs" ADD COLUMN "is_current" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "scoring_runs_one_current" ON "scoring_runs" USING btree ("fantasy_league_id","match_id") WHERE "scoring_runs"."is_current";--> statement-breakpoint
+ALTER TABLE "scoring_runs" ADD CONSTRAINT "scoring_runs_current_completed" CHECK (NOT "scoring_runs"."is_current" OR "scoring_runs"."status" = 'completed');

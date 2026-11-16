@@ -2,10 +2,9 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "CommonJS",
+    "ignoreDeprecations": "6.0",
     "moduleResolution": "Node",
-    "lib": [
-      "ES2022"
-    ],
+    "lib": ["ES2022"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "esModuleInterop": true,
@@ -19,6 +18,7 @@
   "include": [
     "src/**/*.ts",
     "test/**/*.ts",
-    "drizzle.config.ts"
+    "drizzle.config.ts",
+    "scripts/**/*.ts"
   ]
 }

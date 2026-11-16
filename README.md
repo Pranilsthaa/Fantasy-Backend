@@ -55,3 +55,57 @@ failures return status `500` with `{ success: false, message: "Internal server e
 Database commands remain available: `bun run db:generateMigration`,
 `bun run db:migrate`, and `bun run db:seed`. Seeding writes sample data and should
 only be run against an appropriate development database.
+
+## Local league product and schema
+
+See [MEMORY.md](MEMORY.md) for confirmed requirements and checkpoint progress,
+and [database design](docs/database-design.md) for the entity map, ownership,
+invariants, transaction boundaries and remaining product decisions. The first
+sport is cricket. Fantasy squads persist and have a tournament-wide transfer
+allowance. Squad/budget/role/transfer/scoring settings are explicit per rule-set
+version; no assumed FPL values are baked in.
+
+The schema and persistence checks are implemented. League creation, invitations,
+stat entry, squad transfers and the scoring engine are future authenticated
+feature APIs; the schema is not a complete playable app yet.
+
+## Neon PostgreSQL
+
+`neon.ts` declares PostgreSQL-only infrastructure for the project linked in the
+ignored `.neon` file. `neon deploy` reconciles service configuration and pulls
+`DATABASE_URL` (pooled) and `DATABASE_URL_UNPOOLED` (direct) into `.env.local`, or
+`.env` if one already exists. It does not host this Nest server or run SQL migrations.
+The app and Drizzle config load `.env.local` then `.env`; existing process variables
+win. Keep both files private. `pg` reuses a bounded five-connection application
+pool, verifies Neon TLS certificates and allows time for suspended compute to wake.
+
+```bash
+neon deploy
+bun run db:migrate     # Uses the direct connection; run once per deployment
+npm run build
+bun run start:prod
+```
+
+For a read-only compiled-server and database check: `npm run verify:runtime`.
+
+`GET /health/database` performs a real PostgreSQL query. It returns
+`{ "status": "ok", "database": "connected" }` or HTTP 503 with a generic failure.
+It does not expose database configuration or errors.
+
+Rehearse migrations on an isolated branch before production. The integration
+suite first installs the pre-expansion schema, inserts legacy rows, applies the
+new migrations, then checks real HTTP reads, SQL constraints, decimal prices,
+cricket innings, tournament-wide transfer counting and score provenance.
+Fixtures are rolled back/deleted after testing. It never defaults to the app's
+production URL. Supply the test branch credentials privately:
+
+```bash
+# Set TEST_DATABASE_URL to the isolated branch's direct connection string.
+# Set TEST_NEON_BRANCH to its schema-check-<name> branch name.
+bun run test:integration
+```
+
+Running `bun test` without those variables runs the ordinary HTTP regression
+suite and skips PostgreSQL integration tests. `test:integration` fails if its
+explicit test configuration is missing. See [verification](docs/verification.md)
+for the executed checks and their output.

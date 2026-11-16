@@ -1,0 +1,3449 @@
+{
+  "id": "f72745af-6682-4b99-9118-585fbd1d38c3",
+  "prevId": "b8721c10-7668-448d-a158-f4ecd3ca31b4",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.league_members": {
+      "name": "league_members",
+      "schema": "",
+      "columns": {
+        "league_id": {
+          "name": "league_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "league_member_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "league_members_user_idx": {
+          "name": "league_members_user_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "league_members_league_id_leagues_id_fk": {
+          "name": "league_members_league_id_leagues_id_fk",
+          "tableFrom": "league_members",
+          "tableTo": "leagues",
+          "columnsFrom": [
+            "league_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "league_members_user_id_users_id_fk": {
+          "name": "league_members_user_id_users_id_fk",
+          "tableFrom": "league_members",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "league_members_pk": {
+          "name": "league_members_pk",
+          "columns": [
+            "league_id",
+            "user_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.leagues": {
+      "name": "leagues",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sport": {
+          "name": "sport",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'cricket'"
+        },
+        "location": {
+          "name": "location",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "leagues_owner_idx": {
+          "name": "leagues_owner_idx",
+          "columns": [
+            {
+              "expression": "owner_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "leagues_owner_id_users_id_fk": {
+          "name": "leagues_owner_id_users_id_fk",
+          "tableFrom": "leagues",
+          "tableTo": "users",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "leagues_slug_unique": {
+          "name": "leagues_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tournament_players": {
+      "name": "tournament_players",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_id": {
+          "name": "player_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "team_id": {
+          "name": "team_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price": {
+          "name": "price",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "tournament_players_team_idx": {
+          "name": "tournament_players_team_idx",
+          "columns": [
+            {
+              "expression": "tournament_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "team_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "tournament_players_player_idx": {
+          "name": "tournament_players_player_idx",
+          "columns": [
+            {
+              "expression": "player_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "tournament_players_tournament_id_tournaments_id_fk": {
+          "name": "tournament_players_tournament_id_tournaments_id_fk",
+          "tableFrom": "tournament_players",
+          "tableTo": "tournaments",
+          "columnsFrom": [
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tournament_players_player_id_players_id_fk": {
+          "name": "tournament_players_player_id_players_id_fk",
+          "tableFrom": "tournament_players",
+          "tableTo": "players",
+          "columnsFrom": [
+            "player_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tournament_players_scope_1_fk": {
+          "name": "tournament_players_scope_1_fk",
+          "tableFrom": "tournament_players",
+          "tableTo": "tournament_teams",
+          "columnsFrom": [
+            "tournament_id",
+            "team_id"
+          ],
+          "columnsTo": [
+            "tournament_id",
+            "team_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tournament_players_player_unique": {
+          "name": "tournament_players_player_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tournament_id",
+            "player_id"
+          ]
+        },
+        "tournament_players_scope_unique": {
+          "name": "tournament_players_scope_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "tournament_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "tournament_players_price_nonnegative": {
+          "name": "tournament_players_price_nonnegative",
+          "value": "\"tournament_players\".\"price\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.tournament_rounds": {
+      "name": "tournament_rounds",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "number": {
+          "name": "number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deadline": {
+          "name": "deadline",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "tournament_rounds_deadline_idx": {
+          "name": "tournament_rounds_deadline_idx",
+          "columns": [
+            {
+              "expression": "tournament_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "deadline",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "tournament_rounds_tournament_id_tournaments_id_fk": {
+          "name": "tournament_rounds_tournament_id_tournaments_id_fk",
+          "tableFrom": "tournament_rounds",
+          "tableTo": "tournaments",
+          "columnsFrom": [
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tournament_rounds_number_unique": {
+          "name": "tournament_rounds_number_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tournament_id",
+            "number"
+          ]
+        },
+        "tournament_rounds_scope_unique": {
+          "name": "tournament_rounds_scope_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "tournament_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "tournament_rounds_number_positive": {
+          "name": "tournament_rounds_number_positive",
+          "value": "\"tournament_rounds\".\"number\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.tournament_teams": {
+      "name": "tournament_teams",
+      "schema": "",
+      "columns": {
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "team_id": {
+          "name": "team_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "tournament_teams_team_idx": {
+          "name": "tournament_teams_team_idx",
+          "columns": [
+            {
+              "expression": "team_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "tournament_teams_tournament_id_tournaments_id_fk": {
+          "name": "tournament_teams_tournament_id_tournaments_id_fk",
+          "tableFrom": "tournament_teams",
+          "tableTo": "tournaments",
+          "columnsFrom": [
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tournament_teams_team_id_teams_id_fk": {
+          "name": "tournament_teams_team_id_teams_id_fk",
+          "tableFrom": "tournament_teams",
+          "tableTo": "teams",
+          "columnsFrom": [
+            "team_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "tournament_teams_pk": {
+          "name": "tournament_teams_pk",
+          "columns": [
+            "tournament_id",
+            "team_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tournaments": {
+      "name": "tournaments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "league_id": {
+          "name": "league_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "season": {
+          "name": "season",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "tournament_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Asia/Kathmandu'"
+        },
+        "starts_at": {
+          "name": "starts_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ends_at": {
+          "name": "ends_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "tournaments_league_id_leagues_id_fk": {
+          "name": "tournaments_league_id_leagues_id_fk",
+          "tableFrom": "tournaments",
+          "tableTo": "leagues",
+          "columnsFrom": [
+            "league_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tournaments_league_season_unique": {
+          "name": "tournaments_league_season_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "league_id",
+            "season"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "tournaments_date_order": {
+          "name": "tournaments_date_order",
+          "value": "\"tournaments\".\"ends_at\" IS NULL OR \"tournaments\".\"starts_at\" IS NULL OR \"tournaments\".\"ends_at\" >= \"tournaments\".\"starts_at\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.cricket_innings": {
+      "name": "cricket_innings",
+      "schema": "",
+      "columns": {
+        "revision_id": {
+          "name": "revision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_id": {
+          "name": "match_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "number": {
+          "name": "number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "batting_team_id": {
+          "name": "batting_team_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bowling_team_id": {
+          "name": "bowling_team_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "runs": {
+          "name": "runs",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wickets": {
+          "name": "wickets",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "legal_balls": {
+          "name": "legal_balls",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "extras": {
+          "name": "extras",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "cricket_innings_scope_1_fk": {
+          "name": "cricket_innings_scope_1_fk",
+          "tableFrom": "cricket_innings",
+          "tableTo": "match_stat_revisions",
+          "columnsFrom": [
+            "revision_id",
+            "match_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "match_id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "cricket_innings_scope_2_fk": {
+          "name": "cricket_innings_scope_2_fk",
+          "tableFrom": "cricket_innings",
+          "tableTo": "tournament_teams",
+          "columnsFrom": [
+            "tournament_id",
+            "batting_team_id"
+          ],
+          "columnsTo": [
+            "tournament_id",
+            "team_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "cricket_innings_scope_3_fk": {
+          "name": "cricket_innings_scope_3_fk",
+          "tableFrom": "cricket_innings",
+          "tableTo": "tournament_teams",
+          "columnsFrom": [
+            "tournament_id",
+            "bowling_team_id"
+          ],
+          "columnsTo": [
+            "tournament_id",
+            "team_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "cricket_innings_pk": {
+          "name": "cricket_innings_pk",
+          "columns": [
+            "revision_id",
+            "number"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "cricket_innings_values": {
+          "name": "cricket_innings_values",
+          "value": "\"cricket_innings\".\"number\" > 0 AND \"cricket_innings\".\"runs\" >= 0 AND \"cricket_innings\".\"wickets\" BETWEEN 0 AND 10 AND \"cricket_innings\".\"legal_balls\" >= 0 AND \"cricket_innings\".\"extras\" BETWEEN 0 AND \"cricket_innings\".\"runs\" AND \"cricket_innings\".\"batting_team_id\" <> \"cricket_innings\".\"bowling_team_id\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.match_players": {
+      "name": "match_players",
+      "schema": "",
+      "columns": {
+        "match_id": {
+          "name": "match_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_player_id": {
+          "name": "tournament_player_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "match_players_registration_idx": {
+          "name": "match_players_registration_idx",
+          "columns": [
+            {
+              "expression": "tournament_player_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "tournament_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "match_players_scope_1_fk": {
+          "name": "match_players_scope_1_fk",
+          "tableFrom": "match_players",
+          "tableTo": "matches",
+          "columnsFrom": [
+            "match_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "match_players_scope_2_fk": {
+          "name": "match_players_scope_2_fk",
+          "tableFrom": "match_players",
+          "tableTo": "tournament_players",
+          "columnsFrom": [
+            "tournament_player_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "match_players_pk": {
+          "name": "match_players_pk",
+          "columns": [
+            "match_id",
+            "tournament_player_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "match_players_scope_unique": {
+          "name": "match_players_scope_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "match_id",
+            "tournament_player_id",
+            "tournament_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.match_results": {
+      "name": "match_results",
+      "schema": "",
+      "columns": {
+        "revision_id": {
+          "name": "revision_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "match_id": {
+          "name": "match_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "outcome": {
+          "name": "outcome",
+          "type": "match_outcome",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "winner_team_id": {
+          "name": "winner_team_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "summary": {
+          "name": "summary",
+          "type": "varchar(300)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "match_results_scope_1_fk": {
+          "name": "match_results_scope_1_fk",
+          "tableFrom": "match_results",
+          "tableTo": "match_stat_revisions",
+          "columnsFrom": [
+            "revision_id",
+            "match_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "match_id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "match_results_scope_2_fk": {
+          "name": "match_results_scope_2_fk",
+          "tableFrom": "match_results",
+          "tableTo": "tournament_teams",
+          "columnsFrom": [
+            "tournament_id",
+            "winner_team_id"
+          ],
+          "columnsTo": [
+            "tournament_id",
+            "team_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "match_results_winner": {
+          "name": "match_results_winner",
+          "value": "(\"match_results\".\"outcome\" = 'team_win') = (\"match_results\".\"winner_team_id\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.match_stat_revisions": {
+      "name": "match_stat_revisions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "match_id": {
+          "name": "match_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revision": {
+          "name": "revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "stat_revision_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "submitted_by": {
+          "name": "submitted_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "match_stat_revisions_one_published": {
+          "name": "match_stat_revisions_one_published",
+          "columns": [
+            {
+              "expression": "match_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"match_stat_revisions\".\"status\" = 'published'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "match_stat_revisions_submitted_by_users_id_fk": {
+          "name": "match_stat_revisions_submitted_by_users_id_fk",
+          "tableFrom": "match_stat_revisions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "submitted_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "match_stat_revisions_scope_1_fk": {
+          "name": "match_stat_revisions_scope_1_fk",
+          "tableFrom": "match_stat_revisions",
+          "tableTo": "matches",
+          "columnsFrom": [
+            "match_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "match_stat_revisions_number_unique": {
+          "name": "match_stat_revisions_number_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "match_id",
+            "revision"
+          ]
+        },
+        "match_stat_revisions_scope_unique": {
+          "name": "match_stat_revisions_scope_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "match_id",
+            "tournament_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "match_stat_revisions_number_positive": {
+          "name": "match_stat_revisions_number_positive",
+          "value": "\"match_stat_revisions\".\"revision\" > 0"
+        },
+        "match_stat_revisions_publication_time": {
+          "name": "match_stat_revisions_publication_time",
+          "value": "\"match_stat_revisions\".\"status\" = 'draft' OR \"match_stat_revisions\".\"published_at\" IS NOT NULL"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.player_match_stats": {
+      "name": "player_match_stats",
+      "schema": "",
+      "columns": {
+        "revision_id": {
+          "name": "revision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_id": {
+          "name": "match_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_player_id": {
+          "name": "tournament_player_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stat_definition_id": {
+          "name": "stat_definition_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "numeric(16, 4)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "player_match_stats_player_idx": {
+          "name": "player_match_stats_player_idx",
+          "columns": [
+            {
+              "expression": "tournament_player_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "stat_definition_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "player_match_stats_stat_definition_id_stat_definitions_id_fk": {
+          "name": "player_match_stats_stat_definition_id_stat_definitions_id_fk",
+          "tableFrom": "player_match_stats",
+          "tableTo": "stat_definitions",
+          "columnsFrom": [
+            "stat_definition_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "player_match_stats_scope_1_fk": {
+          "name": "player_match_stats_scope_1_fk",
+          "tableFrom": "player_match_stats",
+          "tableTo": "match_stat_revisions",
+          "columnsFrom": [
+            "revision_id",
+            "match_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "match_id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "player_match_stats_scope_2_fk": {
+          "name": "player_match_stats_scope_2_fk",
+          "tableFrom": "player_match_stats",
+          "tableTo": "match_players",
+          "columnsFrom": [
+            "match_id",
+            "tournament_player_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "match_id",
+            "tournament_player_id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "player_match_stats_pk": {
+          "name": "player_match_stats_pk",
+          "columns": [
+            "revision_id",
+            "tournament_player_id",
+            "stat_definition_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "player_match_stats_value_nonnegative": {
+          "name": "player_match_stats_value_nonnegative",
+          "value": "\"player_match_stats\".\"value\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.stat_definitions": {
+      "name": "stat_definitions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "sport": {
+          "name": "sport",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key": {
+          "name": "key",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit": {
+          "name": "unit",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'count'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "stat_definitions_sport_key_unique": {
+          "name": "stat_definitions_sport_key_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "sport",
+            "key"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.fantasy_entries": {
+      "name": "fantasy_entries",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "fantasy_league_id": {
+          "name": "fantasy_league_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "invitation_id": {
+          "name": "invitation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "fantasy_entries_user_idx": {
+          "name": "fantasy_entries_user_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "fantasy_entries_invitation_idx": {
+          "name": "fantasy_entries_invitation_idx",
+          "columns": [
+            {
+              "expression": "invitation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "fantasy_entries_user_id_users_id_fk": {
+          "name": "fantasy_entries_user_id_users_id_fk",
+          "tableFrom": "fantasy_entries",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fantasy_entries_scope_1_fk": {
+          "name": "fantasy_entries_scope_1_fk",
+          "tableFrom": "fantasy_entries",
+          "tableTo": "fantasy_leagues",
+          "columnsFrom": [
+            "fantasy_league_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fantasy_entries_scope_2_fk": {
+          "name": "fantasy_entries_scope_2_fk",
+          "tableFrom": "fantasy_entries",
+          "tableTo": "fantasy_invitations",
+          "columnsFrom": [
+            "invitation_id",
+            "fantasy_league_id"
+          ],
+          "columnsTo": [
+            "id",
+            "fantasy_league_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "fantasy_entries_user_unique": {
+          "name": "fantasy_entries_user_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "fantasy_league_id",
+            "user_id"
+          ]
+        },
+        "fantasy_entries_scope_unique": {
+          "name": "fantasy_entries_scope_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "fantasy_league_id",
+            "tournament_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.fantasy_entry_match_points": {
+      "name": "fantasy_entry_match_points",
+      "schema": "",
+      "columns": {
+        "run_id": {
+          "name": "run_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entry_id": {
+          "name": "entry_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "squad_id": {
+          "name": "squad_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fantasy_league_id": {
+          "name": "fantasy_league_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round_id": {
+          "name": "round_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "points": {
+          "name": "points",
+          "type": "numeric(16, 4)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "fantasy_entry_match_points_entry_idx": {
+          "name": "fantasy_entry_match_points_entry_idx",
+          "columns": [
+            {
+              "expression": "entry_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "fantasy_entry_match_points_scope_1_fk": {
+          "name": "fantasy_entry_match_points_scope_1_fk",
+          "tableFrom": "fantasy_entry_match_points",
+          "tableTo": "scoring_runs",
+          "columnsFrom": [
+            "run_id",
+            "fantasy_league_id",
+            "tournament_id",
+            "round_id"
+          ],
+          "columnsTo": [
+            "id",
+            "fantasy_league_id",
+            "tournament_id",
+            "round_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fantasy_entry_match_points_scope_2_fk": {
+          "name": "fantasy_entry_match_points_scope_2_fk",
+          "tableFrom": "fantasy_entry_match_points",
+          "tableTo": "fantasy_squads",
+          "columnsFrom": [
+            "squad_id",
+            "entry_id",
+            "fantasy_league_id",
+            "tournament_id",
+            "round_id"
+          ],
+          "columnsTo": [
+            "id",
+            "entry_id",
+            "fantasy_league_id",
+            "tournament_id",
+            "round_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "fantasy_entry_match_points_pk": {
+          "name": "fantasy_entry_match_points_pk",
+          "columns": [
+            "run_id",
+            "entry_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.fantasy_invitations": {
+      "name": "fantasy_invitations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "fantasy_league_id": {
+          "name": "fantasy_league_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "max_uses": {
+          "name": "max_uses",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "fantasy_invitations_league_idx": {
+          "name": "fantasy_invitations_league_idx",
+          "columns": [
+            {
+              "expression": "fantasy_league_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "fantasy_invitations_fantasy_league_id_fantasy_leagues_id_fk": {
+          "name": "fantasy_invitations_fantasy_league_id_fantasy_leagues_id_fk",
+          "tableFrom": "fantasy_invitations",
+          "tableTo": "fantasy_leagues",
+          "columnsFrom": [
+            "fantasy_league_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fantasy_invitations_created_by_users_id_fk": {
+          "name": "fantasy_invitations_created_by_users_id_fk",
+          "tableFrom": "fantasy_invitations",
+          "tableTo": "users",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "fantasy_invitations_token_hash_unique": {
+          "name": "fantasy_invitations_token_hash_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token_hash"
+          ]
+        },
+        "fantasy_invitations_scope_unique": {
+          "name": "fantasy_invitations_scope_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "fantasy_league_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "fantasy_invitations_max_uses_positive": {
+          "name": "fantasy_invitations_max_uses_positive",
+          "value": "\"fantasy_invitations\".\"max_uses\" > 0"
+        },
+        "fantasy_invitations_expiry": {
+          "name": "fantasy_invitations_expiry",
+          "value": "\"fantasy_invitations\".\"expires_at\" > \"fantasy_invitations\".\"created_at\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.fantasy_leagues": {
+      "name": "fantasy_leagues",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rule_set_id": {
+          "name": "rule_set_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "fantasy_leagues_tournament_idx": {
+          "name": "fantasy_leagues_tournament_idx",
+          "columns": [
+            {
+              "expression": "tournament_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "fantasy_leagues_owner_idx": {
+          "name": "fantasy_leagues_owner_idx",
+          "columns": [
+            {
+              "expression": "owner_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "fantasy_leagues_tournament_id_tournaments_id_fk": {
+          "name": "fantasy_leagues_tournament_id_tournaments_id_fk",
+          "tableFrom": "fantasy_leagues",
+          "tableTo": "tournaments",
+          "columnsFrom": [
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fantasy_leagues_owner_id_users_id_fk": {
+          "name": "fantasy_leagues_owner_id_users_id_fk",
+          "tableFrom": "fantasy_leagues",
+          "tableTo": "users",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fantasy_leagues_scope_1_fk": {
+          "name": "fantasy_leagues_scope_1_fk",
+          "tableFrom": "fantasy_leagues",
+          "tableTo": "fantasy_rule_sets",
+          "columnsFrom": [
+            "rule_set_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "fantasy_leagues_scope_unique": {
+          "name": "fantasy_leagues_scope_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "tournament_id"
+          ]
+        },
+        "fantasy_leagues_policy_unique": {
+          "name": "fantasy_leagues_policy_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "tournament_id",
+            "rule_set_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.fantasy_rule_sets": {
+      "name": "fantasy_rule_sets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "squad_size": {
+          "name": "squad_size",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "starting_size": {
+          "name": "starting_size",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "budget": {
+          "name": "budget",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "max_per_team": {
+          "name": "max_per_team",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "transfer_limit": {
+          "name": "transfer_limit",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "captain_multiplier": {
+          "name": "captain_multiplier",
+          "type": "numeric(6, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role_limits": {
+          "name": "role_limits",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fantasy_rule_sets_tournament_id_tournaments_id_fk": {
+          "name": "fantasy_rule_sets_tournament_id_tournaments_id_fk",
+          "tableFrom": "fantasy_rule_sets",
+          "tableTo": "tournaments",
+          "columnsFrom": [
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "fantasy_rule_sets_version_unique": {
+          "name": "fantasy_rule_sets_version_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tournament_id",
+            "name",
+            "version"
+          ]
+        },
+        "fantasy_rule_sets_scope_unique": {
+          "name": "fantasy_rule_sets_scope_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "tournament_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "fantasy_rule_sets_bounds": {
+          "name": "fantasy_rule_sets_bounds",
+          "value": "\"fantasy_rule_sets\".\"version\" > 0 AND \"fantasy_rule_sets\".\"squad_size\" > 0 AND \"fantasy_rule_sets\".\"starting_size\" > 0 AND \"fantasy_rule_sets\".\"starting_size\" <= \"fantasy_rule_sets\".\"squad_size\" AND \"fantasy_rule_sets\".\"budget\" >= 0 AND \"fantasy_rule_sets\".\"max_per_team\" > 0 AND \"fantasy_rule_sets\".\"max_per_team\" <= \"fantasy_rule_sets\".\"squad_size\" AND \"fantasy_rule_sets\".\"transfer_limit\" >= 0 AND \"fantasy_rule_sets\".\"captain_multiplier\" >= 1"
+        },
+        "fantasy_rule_sets_roles_object": {
+          "name": "fantasy_rule_sets_roles_object",
+          "value": "jsonb_typeof(\"fantasy_rule_sets\".\"role_limits\") = 'object'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.fantasy_scoring_rules": {
+      "name": "fantasy_scoring_rules",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "rule_set_id": {
+          "name": "rule_set_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stat_definition_id": {
+          "name": "stat_definition_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "points_per_unit": {
+          "name": "points_per_unit",
+          "type": "numeric(12, 4)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "minimum": {
+          "name": "minimum",
+          "type": "numeric(16, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "maximum": {
+          "name": "maximum",
+          "type": "numeric(16, 4)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "fantasy_scoring_rules_ruleset_idx": {
+          "name": "fantasy_scoring_rules_ruleset_idx",
+          "columns": [
+            {
+              "expression": "rule_set_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "fantasy_scoring_rules_rule_set_id_fantasy_rule_sets_id_fk": {
+          "name": "fantasy_scoring_rules_rule_set_id_fantasy_rule_sets_id_fk",
+          "tableFrom": "fantasy_scoring_rules",
+          "tableTo": "fantasy_rule_sets",
+          "columnsFrom": [
+            "rule_set_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fantasy_scoring_rules_stat_definition_id_stat_definitions_id_fk": {
+          "name": "fantasy_scoring_rules_stat_definition_id_stat_definitions_id_fk",
+          "tableFrom": "fantasy_scoring_rules",
+          "tableTo": "stat_definitions",
+          "columnsFrom": [
+            "stat_definition_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "fantasy_scoring_rules_range": {
+          "name": "fantasy_scoring_rules_range",
+          "value": "\"fantasy_scoring_rules\".\"minimum\" IS NULL OR \"fantasy_scoring_rules\".\"maximum\" IS NULL OR \"fantasy_scoring_rules\".\"maximum\" >= \"fantasy_scoring_rules\".\"minimum\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.fantasy_squad_picks": {
+      "name": "fantasy_squad_picks",
+      "schema": "",
+      "columns": {
+        "squad_id": {
+          "name": "squad_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_player_id": {
+          "name": "tournament_player_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot": {
+          "name": "slot",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "purchase_price": {
+          "name": "purchase_price",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_starting": {
+          "name": "is_starting",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_captain": {
+          "name": "is_captain",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "is_vice_captain": {
+          "name": "is_vice_captain",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {
+        "fantasy_squad_picks_one_captain": {
+          "name": "fantasy_squad_picks_one_captain",
+          "columns": [
+            {
+              "expression": "squad_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"fantasy_squad_picks\".\"is_captain\"",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "fantasy_squad_picks_one_vice_captain": {
+          "name": "fantasy_squad_picks_one_vice_captain",
+          "columns": [
+            {
+              "expression": "squad_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"fantasy_squad_picks\".\"is_vice_captain\"",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "fantasy_squad_picks_player_idx": {
+          "name": "fantasy_squad_picks_player_idx",
+          "columns": [
+            {
+              "expression": "tournament_player_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "tournament_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "fantasy_squad_picks_scope_1_fk": {
+          "name": "fantasy_squad_picks_scope_1_fk",
+          "tableFrom": "fantasy_squad_picks",
+          "tableTo": "fantasy_squads",
+          "columnsFrom": [
+            "squad_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fantasy_squad_picks_scope_2_fk": {
+          "name": "fantasy_squad_picks_scope_2_fk",
+          "tableFrom": "fantasy_squad_picks",
+          "tableTo": "tournament_players",
+          "columnsFrom": [
+            "tournament_player_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "fantasy_squad_picks_pk": {
+          "name": "fantasy_squad_picks_pk",
+          "columns": [
+            "squad_id",
+            "tournament_player_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "fantasy_squad_picks_slot_unique": {
+          "name": "fantasy_squad_picks_slot_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "squad_id",
+            "slot"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "fantasy_squad_picks_valid": {
+          "name": "fantasy_squad_picks_valid",
+          "value": "\"fantasy_squad_picks\".\"slot\" > 0 AND \"fantasy_squad_picks\".\"purchase_price\" >= 0 AND NOT (\"fantasy_squad_picks\".\"is_captain\" AND \"fantasy_squad_picks\".\"is_vice_captain\") AND (NOT (\"fantasy_squad_picks\".\"is_captain\" OR \"fantasy_squad_picks\".\"is_vice_captain\") OR \"fantasy_squad_picks\".\"is_starting\")"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.fantasy_squads": {
+      "name": "fantasy_squads",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "entry_id": {
+          "name": "entry_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fantasy_league_id": {
+          "name": "fantasy_league_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round_id": {
+          "name": "round_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "squad_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "locked_at": {
+          "name": "locked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "fantasy_squads_round_idx": {
+          "name": "fantasy_squads_round_idx",
+          "columns": [
+            {
+              "expression": "round_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "tournament_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "fantasy_squads_scope_1_fk": {
+          "name": "fantasy_squads_scope_1_fk",
+          "tableFrom": "fantasy_squads",
+          "tableTo": "fantasy_entries",
+          "columnsFrom": [
+            "entry_id",
+            "fantasy_league_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "fantasy_league_id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fantasy_squads_scope_2_fk": {
+          "name": "fantasy_squads_scope_2_fk",
+          "tableFrom": "fantasy_squads",
+          "tableTo": "tournament_rounds",
+          "columnsFrom": [
+            "round_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "fantasy_squads_entry_round_unique": {
+          "name": "fantasy_squads_entry_round_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "entry_id",
+            "round_id"
+          ]
+        },
+        "fantasy_squads_scope_unique": {
+          "name": "fantasy_squads_scope_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "tournament_id"
+          ]
+        },
+        "fantasy_squads_result_scope_unique": {
+          "name": "fantasy_squads_result_scope_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "entry_id",
+            "fantasy_league_id",
+            "tournament_id",
+            "round_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "fantasy_squads_lock_time": {
+          "name": "fantasy_squads_lock_time",
+          "value": "(\"fantasy_squads\".\"status\" = 'locked') = (\"fantasy_squads\".\"locked_at\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.fantasy_transfers": {
+      "name": "fantasy_transfers",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "entry_id": {
+          "name": "entry_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fantasy_league_id": {
+          "name": "fantasy_league_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round_id": {
+          "name": "round_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "outgoing_player_id": {
+          "name": "outgoing_player_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "incoming_player_id": {
+          "name": "incoming_player_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sale_price": {
+          "name": "sale_price",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "purchase_price": {
+          "name": "purchase_price",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_id": {
+          "name": "request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "fantasy_transfers_usage_idx": {
+          "name": "fantasy_transfers_usage_idx",
+          "columns": [
+            {
+              "expression": "entry_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "fantasy_transfers_scope_1_fk": {
+          "name": "fantasy_transfers_scope_1_fk",
+          "tableFrom": "fantasy_transfers",
+          "tableTo": "fantasy_entries",
+          "columnsFrom": [
+            "entry_id",
+            "fantasy_league_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "fantasy_league_id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fantasy_transfers_scope_2_fk": {
+          "name": "fantasy_transfers_scope_2_fk",
+          "tableFrom": "fantasy_transfers",
+          "tableTo": "tournament_rounds",
+          "columnsFrom": [
+            "round_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fantasy_transfers_scope_3_fk": {
+          "name": "fantasy_transfers_scope_3_fk",
+          "tableFrom": "fantasy_transfers",
+          "tableTo": "tournament_players",
+          "columnsFrom": [
+            "outgoing_player_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fantasy_transfers_scope_4_fk": {
+          "name": "fantasy_transfers_scope_4_fk",
+          "tableFrom": "fantasy_transfers",
+          "tableTo": "tournament_players",
+          "columnsFrom": [
+            "incoming_player_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "fantasy_transfers_request_unique": {
+          "name": "fantasy_transfers_request_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "entry_id",
+            "request_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "fantasy_transfers_valid": {
+          "name": "fantasy_transfers_valid",
+          "value": "\"fantasy_transfers\".\"outgoing_player_id\" <> \"fantasy_transfers\".\"incoming_player_id\" AND \"fantasy_transfers\".\"sale_price\" >= 0 AND \"fantasy_transfers\".\"purchase_price\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.player_match_points": {
+      "name": "player_match_points",
+      "schema": "",
+      "columns": {
+        "run_id": {
+          "name": "run_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_id": {
+          "name": "match_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_player_id": {
+          "name": "tournament_player_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "points": {
+          "name": "points",
+          "type": "numeric(16, 4)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "breakdown": {
+          "name": "breakdown",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "player_match_points_scope_1_fk": {
+          "name": "player_match_points_scope_1_fk",
+          "tableFrom": "player_match_points",
+          "tableTo": "scoring_runs",
+          "columnsFrom": [
+            "run_id",
+            "match_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "match_id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "player_match_points_scope_2_fk": {
+          "name": "player_match_points_scope_2_fk",
+          "tableFrom": "player_match_points",
+          "tableTo": "match_players",
+          "columnsFrom": [
+            "match_id",
+            "tournament_player_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "match_id",
+            "tournament_player_id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "player_match_points_pk": {
+          "name": "player_match_points_pk",
+          "columns": [
+            "run_id",
+            "tournament_player_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.scoring_runs": {
+      "name": "scoring_runs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "fantasy_league_id": {
+          "name": "fantasy_league_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_id": {
+          "name": "match_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round_id": {
+          "name": "round_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revision_id": {
+          "name": "revision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rule_set_id": {
+          "name": "rule_set_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "engine_version": {
+          "name": "engine_version",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "scoring_run_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "scoring_runs_leaderboard_idx": {
+          "name": "scoring_runs_leaderboard_idx",
+          "columns": [
+            {
+              "expression": "fantasy_league_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "match_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "scoring_runs_scope_1_fk": {
+          "name": "scoring_runs_scope_1_fk",
+          "tableFrom": "scoring_runs",
+          "tableTo": "fantasy_leagues",
+          "columnsFrom": [
+            "fantasy_league_id",
+            "tournament_id",
+            "rule_set_id"
+          ],
+          "columnsTo": [
+            "id",
+            "tournament_id",
+            "rule_set_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "scoring_runs_scope_2_fk": {
+          "name": "scoring_runs_scope_2_fk",
+          "tableFrom": "scoring_runs",
+          "tableTo": "matches",
+          "columnsFrom": [
+            "match_id",
+            "tournament_id",
+            "round_id"
+          ],
+          "columnsTo": [
+            "id",
+            "tournament_id",
+            "round_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "scoring_runs_scope_3_fk": {
+          "name": "scoring_runs_scope_3_fk",
+          "tableFrom": "scoring_runs",
+          "tableTo": "match_stat_revisions",
+          "columnsFrom": [
+            "revision_id",
+            "match_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "match_id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "scoring_runs_calculation_unique": {
+          "name": "scoring_runs_calculation_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "fantasy_league_id",
+            "match_id",
+            "revision_id",
+            "rule_set_id",
+            "engine_version"
+          ]
+        },
+        "scoring_runs_match_scope_unique": {
+          "name": "scoring_runs_match_scope_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "match_id",
+            "tournament_id"
+          ]
+        },
+        "scoring_runs_entry_scope_unique": {
+          "name": "scoring_runs_entry_scope_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "fantasy_league_id",
+            "tournament_id",
+            "round_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "scoring_runs_completion_time": {
+          "name": "scoring_runs_completion_time",
+          "value": "(\"scoring_runs\".\"status\" = 'completed') = (\"scoring_runs\".\"completed_at\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "username": {
+          "name": "username",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "user_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'user'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_username_unique": {
+          "name": "users_username_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "username"
+          ]
+        },
+        "users_email_unique": {
+          "name": "users_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.players": {
+      "name": "players",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "team_id": {
+          "name": "team_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "age": {
+          "name": "age",
+          "type": "varchar(2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "price": {
+          "name": "price",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "roles",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "players_team_id_teams_id_fk": {
+          "name": "players_team_id_teams_id_fk",
+          "tableFrom": "players",
+          "tableTo": "teams",
+          "columnsFrom": [
+            "team_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.teams": {
+      "name": "teams",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(5)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "logo": {
+          "name": "logo",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "teams_code_unique": {
+          "name": "teams_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "code"
+          ]
+        },
+        "teams_name_unique": {
+          "name": "teams_name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "name"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.matches": {
+      "name": "matches",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "match_number": {
+          "name": "match_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tournament_id": {
+          "name": "tournament_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "round_id": {
+          "name": "round_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "team1_id": {
+          "name": "team1_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "team2_id": {
+          "name": "team2_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "venue": {
+          "name": "venue",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "match_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'upcoming'"
+        }
+      },
+      "indexes": {
+        "matches_legacy_number_unique": {
+          "name": "matches_legacy_number_unique",
+          "columns": [
+            {
+              "expression": "match_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"matches\".\"tournament_id\" IS NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "matches_tournament_schedule_idx": {
+          "name": "matches_tournament_schedule_idx",
+          "columns": [
+            {
+              "expression": "tournament_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "matches_round_idx": {
+          "name": "matches_round_idx",
+          "columns": [
+            {
+              "expression": "round_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "tournament_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "matches_tournament_id_tournaments_id_fk": {
+          "name": "matches_tournament_id_tournaments_id_fk",
+          "tableFrom": "matches",
+          "tableTo": "tournaments",
+          "columnsFrom": [
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "matches_team1_id_teams_id_fk": {
+          "name": "matches_team1_id_teams_id_fk",
+          "tableFrom": "matches",
+          "tableTo": "teams",
+          "columnsFrom": [
+            "team1_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "matches_team2_id_teams_id_fk": {
+          "name": "matches_team2_id_teams_id_fk",
+          "tableFrom": "matches",
+          "tableTo": "teams",
+          "columnsFrom": [
+            "team2_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "matches_scope_1_fk": {
+          "name": "matches_scope_1_fk",
+          "tableFrom": "matches",
+          "tableTo": "tournament_rounds",
+          "columnsFrom": [
+            "round_id",
+            "tournament_id"
+          ],
+          "columnsTo": [
+            "id",
+            "tournament_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "matches_scope_2_fk": {
+          "name": "matches_scope_2_fk",
+          "tableFrom": "matches",
+          "tableTo": "tournament_teams",
+          "columnsFrom": [
+            "tournament_id",
+            "team1_id"
+          ],
+          "columnsTo": [
+            "tournament_id",
+            "team_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "matches_scope_3_fk": {
+          "name": "matches_scope_3_fk",
+          "tableFrom": "matches",
+          "tableTo": "tournament_teams",
+          "columnsFrom": [
+            "tournament_id",
+            "team2_id"
+          ],
+          "columnsTo": [
+            "tournament_id",
+            "team_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "matches_scope_unique": {
+          "name": "matches_scope_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "tournament_id"
+          ]
+        },
+        "matches_round_scope_unique": {
+          "name": "matches_round_scope_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "tournament_id",
+            "round_id"
+          ]
+        },
+        "matches_tournament_number_unique": {
+          "name": "matches_tournament_number_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tournament_id",
+            "match_number"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "matches_distinct_teams": {
+          "name": "matches_distinct_teams",
+          "value": "\"matches\".\"team1_id\" <> \"matches\".\"team2_id\""
+        },
+        "matches_round_scope": {
+          "name": "matches_round_scope",
+          "value": "(\"matches\".\"tournament_id\" IS NULL) = (\"matches\".\"round_id\" IS NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.league_member_role": {
+      "name": "league_member_role",
+      "schema": "public",
+      "values": [
+        "admin",
+        "scorer"
+      ]
+    },
+    "public.tournament_status": {
+      "name": "tournament_status",
+      "schema": "public",
+      "values": [
+        "draft",
+        "open",
+        "live",
+        "completed",
+        "archived"
+      ]
+    },
+    "public.match_outcome": {
+      "name": "match_outcome",
+      "schema": "public",
+      "values": [
+        "team_win",
+        "tie",
+        "no_result",
+        "draw"
+      ]
+    },
+    "public.stat_revision_status": {
+      "name": "stat_revision_status",
+      "schema": "public",
+      "values": [
+        "draft",
+        "published",
+        "superseded"
+      ]
+    },
+    "public.scoring_run_status": {
+      "name": "scoring_run_status",
+      "schema": "public",
+      "values": [
+        "pending",
+        "completed",
+        "failed"
+      ]
+    },
+    "public.squad_status": {
+      "name": "squad_status",
+      "schema": "public",
+      "values": [
+        "draft",
+        "locked"
+      ]
+    },
+    "public.user_role": {
+      "name": "user_role",
+      "schema": "public",
+      "values": [
+        "user",
+        "admin"
+      ]
+    },
+    "public.roles": {
+      "name": "roles",
+      "schema": "public",
+      "values": [
+        "BAT",
+        "BWL",
+        "AR",
+        "WK"
+      ]
+    },
+    "public.match_status": {
+      "name": "match_status",
+      "schema": "public",
+      "values": [
+        "upcoming",
+        "locked",
+        "live",
+        "completed",
+        "cancelled"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

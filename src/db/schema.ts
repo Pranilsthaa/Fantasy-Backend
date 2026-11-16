@@ -1,3 +1,6 @@
+export * from './tournaments';
+export * from './statistics';
+export * from './fantasy';
 export * from './users';
 export * from './players';
 export * from './teams';
@@ -8,7 +11,14 @@ import * as playersSchema from './players';
 import * as teamsSchema from './teams';
 import * as matchesSchema from './matches';
 
+import * as tournamentSchema from './tournaments';
+import * as statisticsSchema from './statistics';
+import * as fantasySchema from './fantasy';
+
 export const schema = {
+  ...tournamentSchema,
+  ...statisticsSchema,
+  ...fantasySchema,
   ...usersSchema,
   ...playersSchema,
   ...teamsSchema,

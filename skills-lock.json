@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "skills": {
+    "nestjs-architecture-principles": {
+      "source": "amirtaherkhani/nestjs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/nestjs-architecture-principles/SKILL.md",
+      "computedHash": "155b50abfaf911f0ba71d16e944d43eebe775c394d627fa9ea9970dcad0681ef"
+    },
+    "nestjs-features-performance": {
+      "source": "amirtaherkhani/nestjs-skills",
+      "sourceType": "github",
+      "skillPath": "skills/nestjs-features-performance/SKILL.md",
+      "computedHash": "2bf413ea5e71ac107e774a0a902c29a03ef3bb4a18cb27749ff88d1174083d85"
+    }
+  }
+}
