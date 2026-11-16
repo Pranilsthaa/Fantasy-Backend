@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, copyFileSync, rmSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { type INestApplication } from '@nestjs/common';
@@ -24,6 +25,7 @@ describe.skipIf(!enabled)('PostgreSQL migration and fantasy schema', () => {
   let tempMigrations: string;
   let transactionStarted = false;
   const originalUrl = process.env.DATABASE_URL;
+  const originalSecret = process.env.JWT_SECRET;
   const id = () => crypto.randomUUID();
   const userId = id(), teamA = id(), teamB = id(), playerA = id(), playerB = id();
   const legacyMatch = id(), league = id(), tournament = id(), otherTournament = id();
@@ -61,6 +63,7 @@ describe.skipIf(!enabled)('PostgreSQL migration and fantasy schema', () => {
     await migrate(db, { migrationsFolder: 'drizzle' });
 
     process.env.DATABASE_URL = testUrl;
+    process.env.JWT_SECRET = randomBytes(48).toString('base64url');
     app = await NestFactory.create(AppModule, { logger: false });
     await app.listen(0, '127.0.0.1');
     origin = await app.getUrl();
@@ -124,6 +127,8 @@ describe.skipIf(!enabled)('PostgreSQL migration and fantasy schema', () => {
       }
     } finally {
       await pool?.end();
+      if (originalSecret === undefined) delete process.env.JWT_SECRET;
+      else process.env.JWT_SECRET = originalSecret;
       if (originalUrl === undefined) delete process.env.DATABASE_URL;
       else process.env.DATABASE_URL = originalUrl;
       if (tempMigrations) rmSync(tempMigrations, { recursive: true, force: true });
@@ -146,6 +151,61 @@ describe.skipIf(!enabled)('PostgreSQL migration and fantasy schema', () => {
     const response = await fetch(`${origin}/api/matches`);
     expect(response.status).toBe(200);
     expect((await response.json() as { data: { id: string }[] }).data.some((m) => m.id === legacyMatch)).toBe(true);
+  }, 30000);
+
+  it('enforces case-insensitive identity uniqueness in PostgreSQL', async () => {
+    await rejectsSql('23505', 'insert into users (username,email,password_hash) select upper(username),$2,$3 from users where id=$1', [userId, `${id()}@example.invalid`, 'test-only']);
+  });
+
+  it('authenticates with PostgreSQL, rotates refresh tokens atomically and revokes sessions', async () => {
+    const username = `auth_${id().replaceAll('-', '').slice(0, 20)}`;
+    const email = `${username}@example.invalid`;
+    const password = 'Only-for-integration-123';
+    let createdUser: string | undefined;
+    type Credentials = { user: { id: string; role: string }; accessToken: string; refreshToken: string };
+    const post = (route: string, body: unknown) => fetch(`${origin}/api/auth/${route}`, {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const me = (token: string) => fetch(`${origin}/api/auth/me`, { headers: { authorization: `Bearer ${token}` } });
+    try {
+      const registration = await post('register', { username, email: email.toUpperCase(), password });
+      expect(registration.status).toBe(201);
+      const signup = await registration.json() as Credentials;
+      createdUser = signup.user.id;
+      expect(signup.user.role).toBe('user');
+      const stored = await pool.query('select password_hash from users where id=$1', [createdUser]);
+      expect(stored.rows[0].password_hash.startsWith('$argon2id$')).toBe(true);
+      expect(await Bun.password.verify(password, stored.rows[0].password_hash)).toBe(true);
+      expect((await me(signup.accessToken)).status).toBe(200);
+      const duplicate = await post('register', { username: `${username}_2`, email, password });
+      expect(duplicate.status).toBe(409);
+      expect((await post('login', { email, password: 'Incorrect-password-123' })).status).toBe(401);
+      const login = await post('login', { email, password });
+      expect(login.status).toBe(200);
+      const credentials = await login.json() as Credentials;
+      const storedSession = await pool.query('select refresh_token_hash from auth_sessions where id=$1', [credentials.refreshToken.slice(0, 36)]);
+      expect(storedSession.rows[0].refresh_token_hash).toMatch(/^[a-f0-9]{64}$/);
+      expect(storedSession.rows[0].refresh_token_hash).not.toBe(credentials.refreshToken);
+      const responses = await Promise.all([
+        post('refresh', { refreshToken: credentials.refreshToken }),
+        post('refresh', { refreshToken: credentials.refreshToken }),
+      ]);
+      expect(responses.map((r) => r.status).sort()).toEqual([200, 401]);
+      const next = await responses.find((r) => r.status === 200)!.json() as Credentials;
+      expect((await me(next.accessToken)).status).toBe(200);
+      expect((await post('refresh', { refreshToken: credentials.refreshToken })).status).toBe(401);
+      expect((await post('logout', { refreshToken: next.refreshToken })).status).toBe(204);
+      expect((await me(next.accessToken)).status).toBe(401);
+      expect((await me(credentials.accessToken)).status).toBe(401);
+      expect((await post('refresh', { refreshToken: next.refreshToken })).status).toBe(401);
+      // Logout is scoped to one session; another device's login remains valid.
+      expect((await me(signup.accessToken)).status).toBe(200);
+      await pool.query("update auth_sessions set created_at=now()-interval '2 days',expires_at=now()-interval '1 day' where id=$1", [signup.refreshToken.slice(0, 36)]);
+      expect((await me(signup.accessToken)).status).toBe(401);
+      expect((await post('refresh', { refreshToken: signup.refreshToken })).status).toBe(401);
+    } finally {
+      if (createdUser) await pool.query('delete from users where id=$1', [createdUser]);
+    }
   }, 30000);
 
   it('keeps legacy fixtures unassigned after migration', async () => {

@@ -43,6 +43,13 @@
       "when": 1794808990980,
       "tag": "0005_parched_hannibal_king",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794809935390,
+      "tag": "0006_lively_dorian_gray",
+      "breakpoints": true
     }
   ]
 }

@@ -29,14 +29,16 @@ The HTTP tests mock the database; they are not evidence of SQL correctness.
    untracked `.agents/`, `skills-lock.json` and deleted Cursor rule.
 2. Database design: complete; see `docs/database-design.md` (entity table,
    Mermaid relationship diagram, ownership, SQL vs application invariants).
-3. Drizzle schema: complete, **27 tables**. New files: `src/db/tournaments.ts`,
+3. Drizzle schema: complete, **28 tables** (including auth sessions). New files: `src/db/tournaments.ts`,
    `statistics.ts`, `fantasy.ts`; legacy schemas remain compatible. Reviewed
-   migrations `0004_curved_hulk.sql` and `0005_parched_hannibal_king.sql` applied.
+   migrations `0004_curved_hulk.sql`, `0005_parched_hannibal_king.sql` and
+   auth migration `0006_lively_dorian_gray.sql` applied.
 4. Neon configuration and environment wiring: complete (details below).
-5. Verification: complete. **10 HTTP tests + 13 real PostgreSQL tests pass**;
+5. Verification: complete. **41 auth/API tests + 15 real PostgreSQL tests pass**;
    `npm run build`, `bun run typecheck`, schema drift check, compiled runtime
    smoke check and `git diff --check` pass. See `docs/verification.md` for output.
-6. Feature workflows: next checkpoint, not implemented in this schema task.
+6. JWT authentication: implemented and verified; see checkpoint below.
+7. League/fantasy feature workflows: next checkpoint.
 
 ## Neon setup progress
 
@@ -100,3 +102,40 @@ compatibility boundary for a later identity/API migration. Original migration 00
 needs a data mapping for databases containing long-name roles; this target was
 empty, and the upgrade rehearsal's legacy rows used the current BAT/BWL roles.
 No remaining verification failures. No seed data was added to production.
+
+## JWT authentication checkpoint
+
+Implemented on 2026-11-16 over the existing users table. No second identity
+provider or Neon Auth service was enabled. See `docs/authentication.md`.
+
+- Routes: `POST /api/auth/register`, `/login`, `/refresh`, `/logout`;
+  `GET /api/auth/me` (all under `/api/auth`).
+- Argon2id passwords; normalized email/username; case-insensitive unique indexes;
+  signup always creates the regular user role. Strict DTO validation rejects
+  unexpected fields and role injection. Password hashes never appear in profiles.
+- Fifteen-minute HS256 access JWTs with fixed issuer/audience, access purpose,
+  user/session IDs and unique token ID. Signature, timing and claims are verified.
+- Seven-day absolute sessions. Only refresh-token hashes are persisted. Refresh
+  rotation is atomic, rejects reuse/concurrent losers and does not extend expiry.
+  Logout revokes the current session immediately, including its access JWTs.
+- Global guard defaults new routes to authenticated. Existing root, health,
+  player list and match list routes are explicitly public. Future league writes
+  still require ownership/membership authorization in application services.
+- Auth endpoints have per-IP/route throttling and no-store responses. Rate-limit
+  storage is local to one instance; shared storage is needed for multiple replicas.
+- `JWT_SECRET` is required and validated at startup. `bun run auth:setup` creates
+  a strong local value only when missing, without printing or replacing it.
+  Keep the value exclusively in ignored environment files/deployment secrets.
+- Migration `0006_lively_dorian_gray.sql` adds sessions and identity indexes.
+  It was rehearsed on the isolated test branch and applied to the application
+  database. The live preflight found zero duplicate email/username groups.
+- Verification: **41 auth/API tests + 15 real PostgreSQL integration tests pass**.
+  Live auth tests use an isolated branch and remove their accounts/sessions.
+  Build and TypeScript checks pass. Production runtime verification is recorded
+  in `docs/verification.md`. No secrets or deployment identifiers belong here.
+- The TypeScript config was aligned with the declared TypeScript 5 dependency by
+  removing a TypeScript-6-only deprecation setting.
+- Not implemented: email verification, password recovery/change, MFA, social
+  login, token-family replay revocation and all-device logout. Clients must
+  serialize refresh/logout and retain the latest refresh credential. Matching
+  an email alone must not authorize invitation claims before verification exists.

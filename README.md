@@ -16,6 +16,7 @@ request logging. Existing databases do not need a new migration for this convers
 
 ```bash
 bun run db:migrate    # Apply existing migrations when setting up a database
+bun run auth:setup   # Generate a private local JWT signing secret once
 bun run start:dev    # Watch TypeScript sources
 ```
 
@@ -65,7 +66,7 @@ sport is cricket. Fantasy squads persist and have a tournament-wide transfer
 allowance. Squad/budget/role/transfer/scoring settings are explicit per rule-set
 version; no assumed FPL values are baked in.
 
-The schema and persistence checks are implemented. League creation, invitations,
+The schema, persistence checks and JWT authentication are implemented. League creation, invitations,
 stat entry, squad transfers and the scoring engine are future authenticated
 feature APIs; the schema is not a complete playable app yet.
 
@@ -109,3 +110,18 @@ Running `bun test` without those variables runs the ordinary HTTP regression
 suite and skips PostgreSQL integration tests. `test:integration` fails if its
 explicit test configuration is missing. See [verification](docs/verification.md)
 for the executed checks and their output.
+
+## Authentication
+
+JWT authentication is available at `/api/auth/register`, `/api/auth/login`,
+`/api/auth/refresh`, `/api/auth/logout` and `/api/auth/me`. Run `bun run auth:setup`
+once to configure the private local signing key, then apply the auth migration
+with `bun run db:migrate`. Local configuration has already been initialized.
+
+Access JWTs expire after 15 minutes. Refresh credentials rotate, and each session
+has an absolute seven-day lifetime. Logout revokes the session immediately.
+New mapped endpoints require authentication by default; the existing schedule,
+player, root and health endpoints remain explicitly public.
+
+See [authentication](docs/authentication.md) for payloads, client behavior,
+validation, token/session policy, rate limits, permissions and test coverage.

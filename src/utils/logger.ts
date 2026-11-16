@@ -6,7 +6,7 @@ export class LoggerMiddleware implements NestMiddleware {
   use(req: Request, _res: Response, next: NextFunction) {
     if (process.env.NODE_ENV === 'development') {
       console.log(`method: ${req.method}`);
-      console.log(`url: ${req.originalUrl}`);
+      console.log(`url: ${req.path}`);
     }
     next();
   }

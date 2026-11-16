@@ -1,11 +1,5 @@
-// DATABASE_URL=postgres://bright:@localhost:5432/test
-
-import { pgTable, uuid, varchar, text, timestamp, pgEnum } from 'drizzle-orm/pg-core';
-// import { relations } from 'drizzle-orm';
-// import { squads } from './squads';
-// import { transfers } from './transfers';
-// import { points } from './points';
-
+import { sql } from 'drizzle-orm';
+import { pgTable, uuid, varchar, text, timestamp, pgEnum, uniqueIndex } from 'drizzle-orm/pg-core';
 // ── Enums ──────────────────────────────────────────────────────────────────
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
 
@@ -18,14 +12,10 @@ export const users = pgTable('users', {
   role:         userRoleEnum('role').notNull().default('user'),
   createdAt:    timestamp('created_at').notNull().defaultNow(),
   updatedAt:    timestamp('updated_at').notNull().defaultNow(),
-});
-
-// // ── Relations ──────────────────────────────────────────────────────────────
-// export const usersRelations = relations(users, ({ one, many }) => ({
-//   squad:     one(squads, { fields: [users.id], references: [squads.userId] }),
-//   transfers: many(transfers),
-//   points:    many(points),
-// }));
+}, (t) => [
+  uniqueIndex('users_email_lower_unique').on(sql`lower(${t.email})`),
+  uniqueIndex('users_username_lower_unique').on(sql`lower(${t.username})`),
+]);
 
 // ── Types ──────────────────────────────────────────────────────────────────
 export type User        = typeof users.$inferSelect;

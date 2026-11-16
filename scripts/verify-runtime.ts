@@ -46,6 +46,14 @@ async function verify() {
         console.log(`GET ${path} -> 200 success=true rows=${body.data.length}`);
       }
     }
+    const profile = await fetch(`${origin}/api/auth/me`);
+    if (profile.status !== 401) throw new Error('Profile accepted an anonymous request');
+    console.log('GET /api/auth/me (anonymous) -> 401');
+    const invalidLogin = await fetch(`${origin}/api/auth/login`, {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}',
+    });
+    if (invalidLogin.status !== 400) throw new Error('Authentication request validation failed');
+    console.log('POST /api/auth/login (invalid body) -> 400');
     console.log('Compiled Nest server and PostgreSQL service: PASS (no data written)');
   } catch (error) {
     console.error(error instanceof Error ? error.message : 'Runtime verification failed');

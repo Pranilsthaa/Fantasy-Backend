@@ -1,3 +1,4 @@
+import { Public } from '../../auth/auth.decorators';
 import { Controller, Get, HttpException, HttpStatus, Inject, Logger } from '@nestjs/common';
 import { MatchesService } from './matches.service';
 
@@ -7,6 +8,7 @@ export class MatchesController {
 
   constructor(@Inject(MatchesService) private readonly service: MatchesService) {}
 
+  @Public()
   @Get()
   async findAll() {
     try {

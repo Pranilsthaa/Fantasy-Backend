@@ -1,3 +1,4 @@
+import { Public } from '../auth/auth.decorators';
 import { Controller, Get, HttpException, HttpStatus, Inject } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { DatabaseService } from './database.service';
@@ -6,6 +7,7 @@ import { DatabaseService } from './database.service';
 export class DatabaseController {
   constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
+  @Public()
   @Get()
   async readiness() {
     try {

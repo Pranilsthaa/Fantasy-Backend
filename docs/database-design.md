@@ -23,7 +23,7 @@ Initial selection is not a transfer; editing an unlocked initial draft is free.
 
 | Capability | Tables | Purpose |
 | --- | --- | --- |
-| Identity | users | Existing accounts; credentials never appear in read APIs |
+| Identity | users, auth_sessions | Accounts and revocable sessions; credentials never appear in read APIs |
 | League administration | leagues, league_members | Real league, owner, scoped organizer/scorer permissions |
 | Tournament | tournaments, tournament_teams, tournament_players, tournament_rounds | Season, enrolled teams, eligible player roles/prices and deadlines |
 | Fixtures | matches, match_players | Schedule and confirmed participants for each fixture |
@@ -149,6 +149,7 @@ rollback may require forward repair; do not drop populated new tables casually.
 
 ## Checkpoint after the schema
 
+JWT identity/session authentication is implemented; see [authentication](authentication.md).
 Next implement authenticated league/tournament registration, invitations,
 fixture/round management, validated stats entry, squad/transfer transactions,
 then scoring and leaderboard reads. Confirm exact cricket rules before shipping

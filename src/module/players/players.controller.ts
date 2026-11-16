@@ -1,3 +1,4 @@
+import { Public } from '../../auth/auth.decorators';
 import { Controller, Get, HttpException, HttpStatus, Inject, Logger } from '@nestjs/common';
 import { PlayersService } from './players.service';
 
@@ -7,6 +8,7 @@ export class PlayersController {
 
   constructor(@Inject(PlayersService) private readonly service: PlayersService) {}
 
+  @Public()
   @Get()
   async findAll() {
     try {

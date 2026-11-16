@@ -2,6 +2,8 @@ import 'reflect-metadata';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, mock } from 'bun:test';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { randomBytes } from 'node:crypto';
+import { AUTH_CONFIG } from '../src/auth/auth.config';
 import { AppModule } from '../src/app.module';
 import { DatabaseService } from '../src/database/database.service';
 
@@ -16,6 +18,8 @@ describe('Fantasy API', () => {
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideProvider(AUTH_CONFIG)
+      .useValue({ secret: randomBytes(48).toString('base64url'), issuer: 'test-api', audience: 'test-client', accessTtlSeconds: 900, sessionTtlSeconds: 604800 })
       .overrideProvider(DatabaseService)
       .useValue({ db: { execute, query: {
         players: { findMany: findPlayers },

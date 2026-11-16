@@ -138,7 +138,81 @@ no production test or seed records were inserted. `git diff --check` also passes
   CommonJS TypeScript configuration. Wrapping it in an async function resolved
   that typecheck failure. Final build, typecheck and runtime checks pass.
 
-No remaining verification failures were observed. This checkpoint does not
-implement authentication, organizer APIs, invite acceptance, transfer enforcement
-or the production scoring engine. Those workflows must enforce the documented
+No remaining verification failures were observed. At the initial database checkpoint, authentication, organizer APIs, invite
+acceptance, transfer enforcement and the production scoring engine were not yet
+implemented. The JWT checkpoint below records the subsequent authentication work. Those workflows must enforce the documented
 application transactions and tenant authorization before public use.
+
+## JWT authentication checkpoint — 2026-11-16
+
+JWT authentication is now implemented; the earlier database checkpoint's
+remaining-authentication note is historical. See [authentication](authentication.md)
+for the current contract and remaining identity features.
+
+```text
+$ npm run build
+> tsc -p tsconfig.build.json
+(exit 0)
+
+$ bun run typecheck
+$ tsc --noEmit
+(exit 0)
+
+$ bun test test/auth.e2e.test.ts test/app.e2e.test.ts
+41 pass
+0 fail
+116 expect() calls
+
+$ bun --env-file=<private-verification-env> run test:integration
+15 pass
+0 fail
+39 expect() calls
+```
+
+The live PostgreSQL suite now additionally proves registration, actual Argon2id
+password storage/verification, case-insensitive identity uniqueness, login,
+authenticated profile access, hashed refresh credentials, one-winner concurrent
+refresh rotation, old-token rejection, immediate session logout, independent
+device sessions and database expiry. It uses an isolated branch and deletes
+test accounts/sessions. Test signing secrets are generated at runtime, independently
+of the application's real signing key.
+
+Before applying the new identity indexes, a read-only live preflight returned:
+
+```json
+{"duplicate_email_groups":0,"duplicate_username_groups":0}
+```
+
+The reviewed `0006_lively_dorian_gray.sql` migration was rehearsed on the test
+branch and then applied to the configured application database:
+
+```text
+$ npm run db:migrate
+Using 'pg' driver for database querying
+[✓] migrations applied successfully!
+
+$ bun run db:generateMigration
+28 tables
+No schema changes, nothing to migrate
+
+$ npm run verify:runtime
+GET / -> 200 Fantasy API is running
+GET /health/database -> 200 {"status":"ok","database":"connected"}
+GET /api/players -> 200 success=true rows=0
+GET /api/matches -> 200 success=true rows=0
+GET /api/auth/me (anonymous) -> 401
+POST /api/auth/login (invalid body) -> 400
+Compiled Nest server and PostgreSQL service: PASS (no data written)
+```
+
+No real signup or login credentials were used against production. A local
+signing secret was generated without printing its value; the repeatable
+`auth:setup` command confirmed an existing value is preserved. The private
+temporary integration environment file was removed afterward. No credentials or
+deployment identifiers were added to `MEMORY.md`.
+
+One build configuration issue was resolved: the declared TypeScript dependency
+is version 5, while the existing configuration contained a TypeScript-6-only
+`ignoreDeprecations` setting. Removing that setting aligned the configuration
+with the declared compiler. Dependency installation required sandbox escalation
+for Bun's temporary cache. No remaining build, test or runtime failures.
