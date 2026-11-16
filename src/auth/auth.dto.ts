@@ -46,13 +46,13 @@ export class RegisterDto {
     type: String,
     format: "password",
     writeOnly: true,
-    minLength: 12,
+    minLength: 8,
     maxLength: 128,
     description:
-      "A passphrase of 12–128 characters. Whitespace and case are preserved.",
+      "A passphrase of 8-128 characters. Whitespace and case are preserved.",
   })
   @IsString()
-  @MinLength(12)
+  @MinLength(8)
   @MaxLength(128)
   password!: string;
 }
