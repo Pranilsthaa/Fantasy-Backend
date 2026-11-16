@@ -1,45 +1,23 @@
-import type { Request, Response } from "express";
-import { db } from "../../db";
+import { Controller, Get, HttpException, HttpStatus, Inject, Logger } from '@nestjs/common';
+import { MatchesService } from './matches.service';
 
-const getAllMatches = async (req:Request, res: Response) => {
-    try{
-        const allMatches = await db.query.matches.findMany({
-            columns: {
-                id: true,
-                matchNumber: true,
-                date: true,
-                venue: true,
-                status: true,
-            },
-            with: {
-                team1: {
-                    columns: {
-                        name: true,
-                        logo: true,
-                        code: true,
-                    }
-                },
-                team2: {
-                    columns: {
-                        name: true,
-                        logo: true,
-                        code: true,
-                    }
-                }
-            }
-        });
-        res.status(200).json({
-            success: true,
-            message: "Matches fetched successfully",
-            data: allMatches,
-        })
-    }catch(error){
-        console.log("Error in getAllMatches:", error);
-        res.status(500).json({
-            success: false,
-            message: "Internal server error",
-        });
+@Controller('api/matches')
+export class MatchesController {
+  private readonly logger = new Logger(MatchesController.name);
+
+  constructor(@Inject(MatchesService) private readonly service: MatchesService) {}
+
+  @Get()
+  async findAll() {
+    try {
+      const data = await this.service.findAll();
+      return { success: true, message: 'Matches fetched successfully', data };
+    } catch (error) {
+      this.logger.error('Error in getAllMatches', error);
+      throw new HttpException(
+        { success: false, message: 'Internal server error' },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
+  }
 }
-
-export {getAllMatches}

@@ -1,42 +1,23 @@
-import type { Request, Response } from "express";
-import { db } from "../../db";
+import { Controller, Get, HttpException, HttpStatus, Inject, Logger } from '@nestjs/common';
+import { PlayersService } from './players.service';
 
-const getAllPlayers = async (req:Request, res: Response) => {
-    try{
-        const allPlayers = await db.query.players.findMany({
-            columns: {
-                id: true,
-                name: true,
-                age: true,
-                price: true,
-                role: true,
-                isActive: true,
-            },
-            with: {
-                team: {
-                    columns: {
-                        name: true,
-                        logo: true,
-                        code: true,
-                    }
-                }
-            }
-        });
+@Controller('api/players')
+export class PlayersController {
+  private readonly logger = new Logger(PlayersController.name);
 
-        res.status(200).json({
-            success: true,
-            message: "Players fetched successfully",
-            data: allPlayers,
-        })
-    }catch(error){
-        console.log("Error in getAllPlayers:", error);
-        res.status(500).json({
-            success: false,
-            message: "Internal server error",
-        });
+  constructor(@Inject(PlayersService) private readonly service: PlayersService) {}
+
+  @Get()
+  async findAll() {
+    try {
+      const data = await this.service.findAll();
+      return { success: true, message: 'Players fetched successfully', data };
+    } catch (error) {
+      this.logger.error('Error in getAllPlayers', error);
+      throw new HttpException(
+        { success: false, message: 'Internal server error' },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
-};
-
-export {
-    getAllPlayers,
+  }
 }
