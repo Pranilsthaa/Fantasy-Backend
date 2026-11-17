@@ -38,7 +38,7 @@ describe('Swagger documentation in Bun source mode', () => {
   });
 
   it('documents every currently implemented operation with responses', () => {
-    const expected = ['/', '/health/database', '/api/players', '/api/matches', '/api/auth/register', '/api/auth/login', '/api/auth/refresh', '/api/auth/logout', '/api/auth/me'];
+    const expected = ['/', '/health/database', '/api/players', '/api/matches', '/api/auth/register', '/api/auth/login', '/api/auth/refresh', '/api/auth/logout', '/api/auth/me', '/api/leagues', '/api/leagues/{leagueId}', '/api/leagues/{leagueId}/staff', '/api/leagues/{leagueId}/staff/{userId}', '/api/leagues/{leagueId}/tournaments', '/api/leagues/{leagueId}/tournaments/{tournamentId}'];
     expect(Object.keys(document.paths).sort()).toEqual(expected.sort());
     expect(document.paths['/api/auth/register']?.post?.responses['201']).toBeDefined();
     expect(document.paths['/api/auth/logout']?.post?.responses['204']).toBeDefined();
@@ -54,7 +54,7 @@ describe('Swagger documentation in Bun source mode', () => {
     const schema = document.components?.schemas?.RegisterDto as SchemaObject;
     expect(schema.required?.sort()).toEqual(['email', 'password', 'username']);
     expect(schema.additionalProperties).toBe(false);
-    expect(schema.properties?.password).toMatchObject({ type: 'string', minLength: 12, maxLength: 128, writeOnly: true });
+    expect(schema.properties?.password).toMatchObject({ type: 'string', minLength: 8, maxLength: 128, writeOnly: true });
   });
 
   it('marks profile access as JWT-protected and public endpoints as unauthenticated', async () => {
@@ -65,6 +65,20 @@ describe('Swagger documentation in Bun source mode', () => {
     }
     expect(document.paths['/api/matches']?.get?.security ?? []).toEqual([]);
     expect((await fetch(`${origin}/api/auth/me`)).status).toBe(401);
+  });
+
+  it('declares every templated UUID parameter and protects league operations', () => {
+    for (const [path, methods] of Object.entries(document.paths)) {
+      if (!path.startsWith('/api/leagues')) continue;
+      for (const method of ['get', 'post', 'put', 'patch', 'delete'] as const) {
+        const operation = methods[method];
+        if (!operation) continue;
+        expect(operation.security).toEqual([{ 'access-token': [] }]);
+        for (const match of path.matchAll(/\{(\w+)\}/g)) {
+          expect(operation.parameters).toContainEqual({ name: match[1]!, in: 'path', required: true, schema: { type: 'string', format: 'uuid' } });
+        }
+      }
+    }
   });
 
   it('documents safe nested response projections and excludes persistence secrets', () => {

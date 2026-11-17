@@ -53,6 +53,9 @@ async function verify() {
     if (spec.status !== 200 || !openapi.paths?.['/api/auth/me']) throw new Error('OpenAPI document failed');
     console.log('GET /api/docs -> 200 Swagger UI');
     console.log('GET /api/docs-json -> 200 OpenAPI document');
+    const leagues = await fetch(`${origin}/api/leagues`);
+    if (leagues.status !== 401) throw new Error('League API accepted an anonymous request');
+    console.log('GET /api/leagues (anonymous) -> 401');
     const profile = await fetch(`${origin}/api/auth/me`);
     if (profile.status !== 401) throw new Error('Profile accepted an anonymous request');
     console.log('GET /api/auth/me (anonymous) -> 401');

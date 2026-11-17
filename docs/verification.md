@@ -255,3 +255,42 @@ The final npm audit reported four moderate development-tooling findings through
 Drizzle Kit's legacy esbuild loader chain; no high or critical findings remain.
 The suggested automatic Drizzle fix crosses a major-version boundary and was not
 applied during Swagger setup. These tooling findings remain for separate review.
+
+## Post-login checkpoint 1 — 2026-11-17
+
+Implemented eleven JWT-protected league/staff/draft-tournament operations using
+the existing tables. No schema migration, new dependency or production write was
+required. See `docs/leagues.md` for the confirmed permissions and API contract.
+
+```text
+npm run build -> exit 0
+bun run typecheck -> exit 0
+bun test test/swagger.e2e.test.ts test/auth.e2e.test.ts test/app.e2e.test.ts
+47 pass, 0 fail
+
+bun --env-file=<private-test-env> run test:integration
+16 pass, 0 fail, 89 expect() calls
+```
+
+The isolated PostgreSQL flow covers all new operations, active membership listing,
+owner-only league/staff edits, owner/admin tournament creation/editing, scorer
+read-only access, no global-admin bypass, cross-league resource hiding, revocation
+and reactivation, generated stable slugs, duplicate seasons, date/timezone checks,
+malformed input and attempts to set owner/sport/status. Fixtures were cleaned up.
+The temporary credential file was removed after verification; the test branch is
+expiring and local production configuration was not changed.
+
+Swagger's source-mode parameter test exposed the need for explicit UUID path
+annotations. They were added and the contract test now passes. The current
+registration DTO's user-configured eight-character minimum was preserved, and
+its stale Swagger test expectation was updated. No authentication policy change.
+
+The read-only compiled runtime check passed, including:
+
+```text
+GET /api/docs -> 200 Swagger UI
+GET /api/docs-json -> 200 OpenAPI document
+GET /api/leagues (anonymous) -> 401
+GET /api/auth/me (anonymous) -> 401
+Compiled Nest server and PostgreSQL service: PASS (no data written)
+```

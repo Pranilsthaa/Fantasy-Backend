@@ -10,6 +10,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool, type PoolClient } from 'pg';
 import { connectionString } from '../src/database/environment';
+import { JwtService } from '@nestjs/jwt';
 import { AppModule } from '../src/app.module';
 import * as tables from '../src/db/schema';
 
@@ -207,6 +208,99 @@ describe.skipIf(!enabled)('PostgreSQL migration and fantasy schema', () => {
       if (createdUser) await pool.query('delete from users where id=$1', [createdUser]);
     }
   }, 30000);
+
+  it('runs the league/tournament checkpoint with real ownership and staff permissions', async () => {
+    const adminId = id(), scorerId = id(), outsiderId = id();
+    const staffNames = [adminId, scorerId, outsiderId].map((value) => `staff_${value.replaceAll('-', '').slice(0, 20)}`);
+    const leagueIds: string[] = [];
+    const sessionIds: string[] = [];
+    const jwt = new JwtService();
+    const tokens = new Map<string, string>();
+    const call = (actor: string | undefined, method: string, path: string, body?: unknown) => fetch(`${origin}/api/leagues${path}`, {
+      method, headers: { ...(actor ? { authorization: `Bearer ${tokens.get(actor)}` } : {}), ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+    try {
+      for (const [index, account] of [adminId, scorerId, outsiderId].entries()) {
+        await pool.query('insert into users (id,username,email,password_hash,role) values ($1,$2,$3,$4,$5)', [account, staffNames[index], `${account}@example.invalid`, 'test-only', account === outsiderId ? 'admin' : 'user']);
+      }
+      for (const account of [userId, adminId, scorerId, outsiderId]) {
+        const session = id(); sessionIds.push(session);
+        await pool.query("insert into auth_sessions (id,user_id,refresh_token_hash,expires_at) values ($1,$2,$3,now()+interval '1 day')", [session, account, randomBytes(32).toString('hex')]);
+        tokens.set(account, await jwt.signAsync({ sub: account, sid: session, tokenUse: 'access' }, { secret: process.env.JWT_SECRET!, issuer: 'local-fantasy-api', audience: 'local-fantasy-clients', algorithm: 'HS256', expiresIn: 900 }));
+      }
+      expect((await call(undefined, 'GET', '')).status).toBe(401);
+      expect((await call(userId, 'POST', '', { name: 'Injected', ownerId: outsiderId })).status).toBe(400);
+      expect((await call(userId, 'POST', '', { name: 'Injected', sport: 'football' })).status).toBe(400);
+      expect((await call(userId, 'POST', '', { name: ' ' })).status).toBe(400);
+      const created = await call(userId, 'POST', '', { name: ' Local cricket ', location: 'Kathmandu' });
+      expect(created.status).toBe(201);
+      const local = await created.json() as { id: string; ownerId: string; slug: string; sport: string; name: string };
+      leagueIds.push(local.id);
+      expect(local).toMatchObject({ ownerId: userId, name: 'Local cricket', sport: 'cricket' });
+      expect(local.slug).toMatch(/^local-cricket-/);
+      const other = await call(outsiderId, 'POST', '', { name: 'Other league' });
+      const otherLeague = await other.json() as { id: string }; leagueIds.push(otherLeague.id);
+      expect((await call(outsiderId, 'GET', `/${local.id}`)).status).toBe(404);
+      const mine = await (await call(outsiderId, 'GET', '')).json() as { data: { id: string }[]; pageSize: number };
+      expect(mine.data.map((row) => row.id)).toContain(otherLeague.id);
+      expect(mine.data.map((row) => row.id)).not.toContain(local.id);
+      expect(mine.pageSize).toBe(20);
+      expect((await call(userId, 'GET', '?page=0')).status).toBe(400);
+      expect((await call(userId, 'GET', '?limit=1000')).status).toBe(400);
+      expect((await call(userId, 'GET', '/not-a-uuid')).status).toBe(400);
+      expect((await call(userId, 'PATCH', `/${local.id}`, {})).status).toBe(400);
+      const renamed = await call(userId, 'PATCH', `/${local.id}`, { name: 'Renamed league' });
+      expect(renamed.status).toBe(200);
+      expect((await renamed.json() as { slug: string }).slug).toBe(local.slug);
+      expect((await call(userId, 'PUT', `/${local.id}/staff`, { username: 'no_such_registered_user', role: 'admin' })).status).toBe(404);
+      for (const [username, role] of [[staffNames[0], 'admin'], [staffNames[1], 'scorer']]) {
+        expect((await call(userId, 'PUT', `/${local.id}/staff`, { username, role })).status).toBe(200);
+      }
+      expect((await call(adminId, 'PATCH', `/${local.id}`, { name: 'Takeover' })).status).toBe(403);
+      expect((await call(adminId, 'PUT', `/${local.id}/staff`, { username: staffNames[2], role: 'admin' })).status).toBe(403);
+      expect((await call(scorerId, 'GET', `/${local.id}`)).status).toBe(200);
+      expect((await call(scorerId, 'GET', `/${local.id}/staff`)).status).toBe(403);
+      const staff = await (await call(userId, 'GET', `/${local.id}/staff`)).json() as { data: Record<string, unknown>[] };
+      expect(staff.data.length).toBe(2);
+      expect(Object.keys(staff.data[0]!).sort()).toEqual(['role', 'userId', 'username']);
+      const adminLeagues = await (await call(adminId, 'GET', '')).json() as { data: { id: string }[] };
+      expect(adminLeagues.data.some((row) => row.id === local.id)).toBe(true);
+      expect((await call(scorerId, 'POST', `/${local.id}/tournaments`, { name: 'Blocked', season: '2026' })).status).toBe(403);
+      expect((await call(adminId, 'POST', `/${local.id}/tournaments`, { name: 'Bad timezone', season: '2026', timezone: 'not/a/timezone' })).status).toBe(400);
+      expect((await call(adminId, 'POST', `/${local.id}/tournaments`, { name: 'Bad dates', season: '2026', startsAt: '2030-02-01T00:00:00Z', endsAt: '2030-01-01T00:00:00Z' })).status).toBe(400);
+      expect((await call(adminId, 'POST', `/${local.id}/tournaments`, { name: 'Injected', season: '2026', status: 'live' })).status).toBe(400);
+      const editionResponse = await call(adminId, 'POST', `/${local.id}/tournaments`, { name: 'First edition', season: '2026', startsAt: '2030-01-01T00:00:00Z', endsAt: '2030-02-01T00:00:00Z' });
+      expect(editionResponse.status).toBe(201);
+      const edition = await editionResponse.json() as { id: string; status: string; timezone: string };
+      expect(edition).toMatchObject({ status: 'draft', timezone: 'Asia/Kathmandu' });
+      expect((await call(userId, 'POST', `/${local.id}/tournaments`, { name: 'Duplicate', season: '2026' })).status).toBe(409);
+      expect((await call(outsiderId, 'POST', `/${otherLeague.id}/tournaments`, { name: 'Same season elsewhere', season: '2026' })).status).toBe(201);
+      expect((await call(scorerId, 'GET', `/${local.id}/tournaments/${edition.id}`)).status).toBe(200);
+      expect((await call(scorerId, 'GET', `/${local.id}/tournaments`)).status).toBe(200);
+      expect((await call(outsiderId, 'GET', `/${otherLeague.id}/tournaments/${edition.id}`)).status).toBe(404);
+      expect((await call(scorerId, 'PATCH', `/${local.id}/tournaments/${edition.id}`, { name: 'Blocked' })).status).toBe(403);
+      expect((await call(adminId, 'PATCH', `/${local.id}/tournaments/${edition.id}`, { startsAt: '2030-03-01T00:00:00Z' })).status).toBe(400);
+      expect((await call(adminId, 'PATCH', `/${local.id}/tournaments/${edition.id}`, { name: 'Updated edition' })).status).toBe(200);
+      await pool.query("update tournaments set status='live' where id=$1", [edition.id]);
+      expect((await call(adminId, 'PATCH', `/${local.id}/tournaments/${edition.id}`, { name: 'Locked' })).status).toBe(409);
+      expect((await call(userId, 'DELETE', `/${local.id}/staff/${userId}`)).status).toBe(400);
+      expect((await call(userId, 'DELETE', `/${local.id}/staff/${adminId}`)).status).toBe(204);
+      expect((await call(adminId, 'GET', `/${local.id}`)).status).toBe(404);
+      expect((await call(adminId, 'POST', `/${local.id}/tournaments`, { name: 'Removed staff', season: '2028' })).status).toBe(404);
+      const removedList = await (await call(adminId, 'GET', '')).json() as { data: { id: string }[] };
+      expect(removedList.data.some((row) => row.id === local.id)).toBe(false);
+      expect((await call(userId, 'PUT', `/${local.id}/staff`, { username: staffNames[0], role: 'scorer' })).status).toBe(200);
+      expect((await call(adminId, 'GET', `/${local.id}`)).status).toBe(200);
+      expect((await call(adminId, 'POST', `/${local.id}/tournaments`, { name: 'Now scorer', season: '2028' })).status).toBe(403);
+    } finally {
+      await pool.query('delete from tournaments where league_id=any($1::uuid[])', [leagueIds]);
+      await pool.query('delete from league_members where league_id=any($1::uuid[])', [leagueIds]);
+      await pool.query('delete from leagues where id=any($1::uuid[])', [leagueIds]);
+      await pool.query('delete from auth_sessions where id=any($1::uuid[])', [sessionIds]);
+      await pool.query('delete from users where id=any($1::uuid[])', [[adminId, scorerId, outsiderId]]);
+    }
+  }, 60000);
 
   it('keeps legacy fixtures unassigned after migration', async () => {
     const { rows } = await client.query('select tournament_id, round_id from matches where id = $1', [legacyMatch]);

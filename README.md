@@ -144,3 +144,11 @@ Refresh/logout use the latest `refreshToken` in their request body. Swagger does
 not persist authorization across reloads. Its UI and JSON specification are public;
 API authentication remains enforced independently. **Try it out** sends real
 requests to the running server, including account creation and session changes.
+
+## League management — checkpoint 1
+
+Authenticated league and draft tournament APIs are available under `/api/leagues`.
+Any user may create a league. Owners manage league details and staff; league admins
+manage draft tournament editions; scorers can read setup. Lists use 20-row pages.
+See [league APIs](docs/leagues.md) or the **Leagues and tournaments** Swagger tag.
+Teams/player registration is the next checkpoint. No additional migration needed.

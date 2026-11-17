@@ -159,3 +159,35 @@ provider or Neon Auth service was enabled. See `docs/authentication.md`.
 - Compatible Express dependency patch constraints clear the install audit's high
   and critical findings. Four moderate Drizzle development-tooling findings remain;
   a suggested major-version change was left for separate review.
+
+## Post-login checkpoint 1 — completed 2026-11-17
+
+User confirmed: any signed-in user can create a cricket league; only the owner
+assigns/removes existing registered users as admins/scorers; admins manage draft
+tournament editions; scorers read setup. League editing is owner-only. No global
+administrator bypass. Participant invitations and fantasy membership are later.
+
+- One `LeaguesModule`, controller, service and DTOs under `src/module/leagues`.
+  Direct Drizzle queries over existing tables; no new dependencies or schema.
+- Eleven JWT-protected endpoints under `/api/leagues`: create/list/details/edit,
+  staff list/assignment/removal, tournament create/list/details/edit.
+- My Leagues includes owned leagues and active staff memberships. Twenty-row
+  pagination, stable ordering, generated stable slugs, cricket fixed on creation.
+- Draft tournaments default to Asia/Kathmandu, validate timezone and timestamp
+  ordering, and enforce unique seasons within a league. Partial date edits use
+  the latest locked row. No status transitions or deletion API in this checkpoint.
+- Cross-league resources are hidden with 404; insufficient staff roles get 403.
+  Owner/status/sport injection is rejected. Membership removal is soft and prevents
+  subsequent access; reassignment can reactivate/change the role.
+- Swagger includes request/response DTOs and explicit UUID parameters for Bun.
+  See `docs/leagues.md` for endpoint details and permission matrix.
+- Tests: 47 API/auth/documentation regressions pass; the live PostgreSQL suite has
+  16 passing tests, including the full league permission flow with 50 additional
+  assertions. Test data was isolated and cleaned up. Build/typecheck pass.
+- Current user change retained: registration password minimum is eight characters;
+  the stale Swagger test expectation was aligned to the current validated DTO.
+- Next: checkpoint 2, tournament team/player registration. Decisions for that
+  checkpoint should use the requested grilling skill before implementation.
+  Keep the scope small; do not add participant invites/scoring prematurely.
+- Never store credentials, connection strings, account/project/branch identifiers
+  or signing secrets in this memory.
