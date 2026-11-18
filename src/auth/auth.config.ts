@@ -22,7 +22,7 @@ export function loadAuthConfig(): AuthConfig {
     secret,
     issuer: "local-fantasy-api",
     audience: "local-fantasy-clients",
-    accessTtlSeconds: 15 * 60,
-    sessionTtlSeconds: 7 * 24 * 60 * 60,
+    accessTtlSeconds: 15 * 60, // 15 minutes
+    sessionTtlSeconds: 7 * 24 * 60 * 60, // 7 days
   };
 }

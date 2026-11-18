@@ -81,7 +81,7 @@ export class AuthService {
       throw new UnauthorizedException("Invalid or expired refresh token");
     const session = await this.repository.findActiveSession(id);
     if (!session)
-      throw new UnauthorizedException("Invalid or expired refresh token");
+      throw new UnauthorizedException("Invalid or expired refresh  token");
     const accessToken = await this.tokens.access(session.user.id, session.id);
     return this.response(
       session.user,
