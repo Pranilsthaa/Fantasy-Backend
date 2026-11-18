@@ -26,6 +26,8 @@ export class TournamentResponseDto {
   @ApiProperty({ type: String }) timezone!: string;
   @ApiProperty({ type: String, format: "date-time", nullable: true })
   startsAt!: string | null;
+  @ApiProperty({ type: String, format: "date-time", nullable: true })
+  schedulePublishedAt!: string | null;
   @ApiProperty({ type: String, format: "date-time", nullable: true }) endsAt!:
     | string
     | null;

@@ -74,7 +74,7 @@ export class LeaguesService {
     return { data, page, pageSize: 20 };
   }
 
-  private async access(
+  async access(
     userId: string,
     leagueId: string,
     write = false,
