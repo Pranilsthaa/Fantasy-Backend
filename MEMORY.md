@@ -1,6 +1,6 @@
 # Project memory
 
-Updated: 2026-11-16 (Asia/Kathmandu).
+Updated: 2026-11-18 (Asia/Kathmandu).
 
 ## Product requirements confirmed by the user
 
@@ -191,3 +191,105 @@ administrator bypass. Participant invitations and fantasy membership are later.
   Keep the scope small; do not add participant invites/scoring prematurely.
 - Never store credentials, connection strings, account/project/branch identifiers
   or signing secrets in this memory.
+
+## Revised delivery order and roster decisions
+
+Build the real tournament workflow first: league-scoped teams and players,
+fixtures and schedules, match statistics and results, then tournament reports.
+Fantasy features follow once that data is available.
+
+A league reuses player profiles across tournament editions. Each edition assigns
+one team per player and may assign a different team in a later season. Preserve
+the registration's team and role once the player has recorded match history.
+Owners/admins manage the roster and scorers can read it. Start with manual
+catalogue management and enrollment. Defer fantasy pricing, bulk imports, and
+player accounts. Logo and age are optional.
+
+“Game type” means sport. The user confirmed cricket for the first release.
+Design cricket statistics and score entry in their own checkpoint.
+
+
+## Post-login checkpoint 2 — league teams and player registration
+
+Implemented manual team/player catalogue management and draft tournament
+enrollment. Teams and profiles belong to one league. A profile can represent
+different teams across editions, with one registration per tournament. Once
+a match participant references a registration, edits and removal are blocked.
+Owners/admins write and scorers read. Unused registrations can be removed.
+Fantasy prices remain optional until the fantasy workflow.
+
+Migration `0007_league_catalogue.sql` was verified on disposable local PostgreSQL,
+including an upgrade with existing records. It has not been applied to the hosted
+database. The private catalogue and tournament records stay out of legacy public
+lists. Swagger documents the team and roster endpoints. All 64 tests, typecheck,
+and build passed. Next checkpoint is fixtures and schedules.
+
+## Post-login checkpoint 3 — fixtures and schedules
+
+User confirmed manual scheduling and public visibility after publication.
+Owners/admins create, reschedule, and publish fixtures. Scorers can read draft
+schedules. Teams must both be enrolled and distinct. Fixture numbers are unique
+within the tournament. A fixture can be created without a fantasy round.
+
+Publishing records a timestamp without changing tournament status. The public
+endpoint `/api/tournaments/:tournamentId/schedule` returns 404 until publication
+and lists fixtures in chronological order afterward. Staff can still reschedule
+upcoming fixtures. Delete is limited to upcoming fixtures on unpublished schedules.
+Published fixtures can go live or be cancelled. Completion comes with results.
+Fixture edits are blocked after play starts or participants have been recorded.
+
+Migration `0008_tournament_schedules.sql` was verified on disposable local
+PostgreSQL and has not been applied to the hosted database. All 64 tests
+(365 assertions), build, typecheck, and Swagger path/schema checks passed.
+Next checkpoint is cricket scorecards, statistics, and results.
+
+## Cricket match management scope
+
+The user wants a match-management app as well as fantasy. For cricket, staff
+must be able to see the active batters, select the active bowler, and record
+play delivery by delivery. Preserve delivery data so scorecards, tournament
+statistics, and later fantasy scoring can use the same match history. Owners
+and league admins publish official scorecards and results, including corrections
+with revision history. Tournament reports precede the fantasy workflows.
+
+The first supported cricket formats and visibility of live scoring are open
+product decisions. Existing innings and player statistics tables store scorecard
+summaries. Delivery history and active lineup state need additional support.
+
+## Post-login checkpoint 4 — cricket scoring
+
+User confirmed limited overs first and a public live score for published fixtures.
+The backend now supports one innings per side, 1–50 overs, lineup selection,
+active batter selection, over-by-over bowler selection, and delivery recording.
+Scorecards derive team totals and batting, bowling and fielding metrics from
+the delivery stream. The record is ready for tournament reports. Clients poll
+the public scorecard endpoint to follow play. Owner/admin publication creates
+an official revision and stores the innings, result and player observations.
+A correction keeps the previous official score live until the new revision is
+published. Scorers can enter and undo deliveries and only owners/admins publish.
+
+Migration `0009_cricket_scoring.sql` and the end-to-end workflow passed on local
+PostgreSQL. Build, typecheck and all 67 tests passed. Migration 0009 is pending
+on the hosted database. See `docs/cricket-scoring.md` for supported rules,
+delivery inputs and current scoring limits. Next checkpoint is tournament
+reports and player/team statistics, then fantasy.
+
+## Post-login checkpoint 5 — tournament reports
+
+User confirmed public results, team standings, and player leaderboards for
+published tournaments. Cricket standings use net run rate after points.
+Football is a future sport and the user indicated it should use shared ranks
+for equal points. This checkpoint delivers cricket reports only.
+
+Public paged reports sit under `/api/tournaments/:tournamentId/reports`.
+Results, team records and player statistics read the current official
+scorecard revision. The cricket table gives 2 points for wins, 1 for ties or
+no result, and 0 for losses. NRR uses aggregate runs and legal-ball counts,
+the allocated quota for all-out innings, and excludes no-result matches.
+Identical points and NRR share a rank. Existing results without overs data
+retain points and are excluded from NRR.
+
+The PostgreSQL test covers public access, hidden drafts, NRR and all-out
+handling, equal points, no-results, leaderboard ordering, paging and correction
+publication. All 67 tests (441 assertions), build and typecheck passed. No
+migration was required for reports. The fantasy phase follows.

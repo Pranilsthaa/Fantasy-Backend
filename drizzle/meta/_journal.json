@@ -50,6 +50,27 @@
       "when": 1794809935390,
       "tag": "0006_lively_dorian_gray",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794979837908,
+      "tag": "0007_league_catalogue",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794980383389,
+      "tag": "0008_tournament_schedules",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794981027888,
+      "tag": "0009_cricket_scoring",
+      "breakpoints": true
     }
   ]
 }

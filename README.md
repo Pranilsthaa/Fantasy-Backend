@@ -151,4 +151,68 @@ Authenticated league and draft tournament APIs are available under `/api/leagues
 Any user may create a league. Owners manage league details and staff; league admins
 manage draft tournament editions; scorers can read setup. Lists use 20-row pages.
 See [league APIs](docs/leagues.md) or the **Leagues and tournaments** Swagger tag.
-Teams/player registration is the next checkpoint. No additional migration needed.
+## Teams and rosters — checkpoint 2
+
+Owners and league admins manage team and player profiles under
+`/api/leagues/:leagueId/teams` and `/api/leagues/:leagueId/players`. Scorers can
+read these lists. To enroll a team or register a player, use the corresponding
+routes under `/api/leagues/:leagueId/tournaments/:tournamentId` in Swagger.
+
+Player profiles are reused across seasons. Each draft tournament stores its
+own team and role for a player. An assignment with a recorded match appearance
+is protected from edits and removal. Remove unused registrations before removing
+their teams or player profiles. Team names and codes are unique within a league.
+
+Apply migration `0007_league_catalogue.sql` before running the new routes against
+an existing database. The next checkpoint is fixtures and schedules.
+
+## Fixtures and schedules — checkpoint 3
+
+In Swagger, use **Tournament schedules** to manage fixtures under
+`/api/leagues/:leagueId/tournaments/:tournamentId/schedule`. Owners and admins
+enter a match number, two enrolled teams, a venue, and a timestamp with an
+explicit timezone. Scorers can read the staff schedule.
+
+Publishing requires at least one fixture and makes the schedule available
+without login at `GET /api/tournaments/:tournamentId/schedule`. Upcoming fixtures
+can be rescheduled after publication. Published fixtures are cancelled instead
+of deleted. Mark a published fixture live to begin play. Completion belongs to
+the results workflow. Publication is separate from tournament status and rounds
+are optional for fixtures at this stage.
+
+Apply migrations through `0008_tournament_schedules.sql` before using these routes
+against an existing deployment.
+
+## Cricket ball-by-ball scoring — checkpoint 4
+
+Use the **Cricket scoring** Swagger tag to set lineups, select active players,
+record deliveries and publish an official result. Spectators can read live
+scores on published fixtures, and official scorecards retain their revisions.
+See [the scoring workflow](docs/cricket-scoring.md) for API usage. Apply migrations
+through `0009_cricket_scoring.sql` before using these routes on an existing deployment.
+
+## Public tournament reports — checkpoint 5
+
+A tournament with a published schedule exposes three reports under
+`/api/tournaments/:tournamentId/reports`. Each returns 20 rows per page.
+
+| Endpoint | Report |
+| --- | --- |
+| `GET /results` | Official results, latest revision, and innings totals |
+| `GET /standings` | Team records, points, and cricket net run rate |
+| `GET /players?category=batting` | Most runs, with batting average and strike rate |
+| `GET /players?category=bowling` | Most wickets, then lowest economy |
+| `GET /players?category=fielding` | Most catches, stumpings, and run-out involvements combined |
+
+Standings give two points for a win, one for a tie or no result, and zero for
+a loss. Net run rate breaks points ties. A team's tournament scoring rate
+uses total runs divided by total overs faced. Subtract the equivalent rate for
+runs conceded. Use the full quota for an all-out innings and exclude no-results
+from both sides of the calculation. Reports rank before rounding. Teams with
+an undefined rate show `null`. Older results without the overs allocation
+still earn points and are excluded from net run rate.
+
+Reports read the latest official revision of each result. A correction
+appears after republication. Match counts on player reports reflect recorded
+lineup appearances. Each leaderboard displays players with activity in its
+category. See the [ICC net run rate guidance](https://images.icc-cricket.com/image/upload/prd/djfjpxtk76drw2xdvgtv.pdf).

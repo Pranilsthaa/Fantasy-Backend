@@ -1,4 +1,5 @@
-import { boolean, integer, pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { leagues } from './leagues';
+import { boolean, index, integer, pgEnum, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 import { teams } from "./teams";
 import { relations } from "drizzle-orm";
 
@@ -6,15 +7,16 @@ export const player_role_enum = pgEnum("roles", ['BAT', 'BWL', 'AR', 'WK'])
 
 export const players = pgTable("players", {
     id: uuid('id').primaryKey().defaultRandom(),
-    team_id: uuid('team_id').notNull().references(()=> teams.id),
+    leagueId: uuid("league_id").references(() => leagues.id),
+    team_id: uuid('team_id').references(()=> teams.id),
     name: varchar('name', {length: 50}).notNull(),
     age: varchar('age', {length: 2}),
-    price: integer('price').notNull(),
+    price: integer('price'),
     role: player_role_enum('role').notNull(),
     isActive:  boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
-})
+}, (t) => [index('players_league_idx').on(t.leagueId)])
 export type Player = typeof players.$inferSelect;
 export type NewPlayer = typeof players.$inferInsert;
 

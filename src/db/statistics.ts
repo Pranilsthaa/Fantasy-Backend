@@ -1,5 +1,6 @@
+import type { scorecard } from '../module/leagues/scoring/cricket';
 import { sql } from 'drizzle-orm';
-import { check, foreignKey, index, integer, numeric, pgEnum, pgTable, primaryKey, timestamp, unique, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
+import { check, foreignKey, index, integer, jsonb, numeric, pgEnum, pgTable, primaryKey, timestamp, unique, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
 import { matches } from './matches';
 import { tournamentPlayers, tournamentTeams } from './tournaments';
 import { users } from './users';
@@ -35,6 +36,7 @@ export const matchStatRevisions = pgTable('match_stat_revisions', {
   submittedBy: uuid('submitted_by').notNull().references(() => users.id),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   publishedAt: timestamp('published_at', { withTimezone: true }),
+  cricketCard: jsonb('cricket_card').$type<ReturnType<typeof scorecard>>(),
 }, (t) => [
   unique('match_stat_revisions_number_unique').on(t.matchId, t.revision),
   unique('match_stat_revisions_scope_unique').on(t.id, t.matchId, t.tournamentId),

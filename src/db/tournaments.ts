@@ -1,3 +1,5 @@
+import { leagues } from './leagues';
+export { leagues } from './leagues';
 import { sql } from 'drizzle-orm';
 import { boolean, check, foreignKey, index, integer, numeric, pgEnum, pgTable, primaryKey, timestamp, unique, uuid, varchar } from 'drizzle-orm/pg-core';
 import { users } from './users';
@@ -7,16 +9,6 @@ import { players } from './players';
 export const leagueMemberRole = pgEnum('league_member_role', ['admin', 'scorer']);
 export const tournamentStatus = pgEnum('tournament_status', ['draft', 'open', 'live', 'completed', 'archived']);
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
-
-export const leagues = pgTable('leagues', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  ownerId: uuid('owner_id').notNull().references(() => users.id),
-  name: varchar('name', { length: 150 }).notNull(),
-  slug: varchar('slug', { length: 150 }).notNull().unique(),
-  sport: varchar('sport', { length: 40 }).notNull().default('cricket'),
-  location: varchar('location', { length: 200 }),
-  createdAt: createdAt(),
-}, (t) => [index('leagues_owner_idx').on(t.ownerId)]);
 
 export const leagueMembers = pgTable('league_members', {
   leagueId: uuid('league_id').notNull().references(() => leagues.id),
@@ -33,6 +25,7 @@ export const tournaments = pgTable('tournaments', {
   season: varchar('season', { length: 50 }).notNull(),
   status: tournamentStatus('status').notNull().default('draft'),
   timezone: varchar('timezone', { length: 80 }).notNull().default('Asia/Kathmandu'),
+  schedulePublishedAt: timestamp('schedule_published_at', { withTimezone: true }),
   startsAt: timestamp('starts_at', { withTimezone: true }),
   endsAt: timestamp('ends_at', { withTimezone: true }),
   createdAt: createdAt(),
@@ -53,7 +46,7 @@ export const tournamentPlayers = pgTable('tournament_players', {
   playerId: uuid('player_id').notNull().references(() => players.id),
   teamId: uuid('team_id').notNull(),
   role: varchar('role', { length: 30 }).notNull(),
-  price: numeric('price', { precision: 12, scale: 2 }).notNull(),
+  price: numeric('price', { precision: 12, scale: 2 }),
   isActive: boolean('is_active').notNull().default(true),
   createdAt: createdAt(),
 }, (t) => [

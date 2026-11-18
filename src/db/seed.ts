@@ -1,6 +1,6 @@
+import { and, eq, isNull } from 'drizzle-orm';
 import { db, teams, players, users, matches } from './index';
 import { exit } from 'process';
-import { eq } from 'drizzle-orm';
 
 async function seed() {
   console.log('🌱 Seeding database...');
@@ -24,11 +24,12 @@ async function seed() {
     for (const teamData of teamsData) {
       await db.insert(teams).values(teamData).onConflictDoUpdate({
         target: teams.code,
+        targetWhere: isNull(teams.leagueId),
         set: { logo: teamData.logo, name: teamData.name }
       });
     }
 
-    const allTeams = await db.select().from(teams);
+    const allTeams = await db.select().from(teams).where(isNull(teams.leagueId));
     const teamMap = allTeams.reduce((acc, team) => {
       acc[team.code] = team.id;
       return acc;
@@ -80,7 +81,7 @@ async function seed() {
     ];
 
     for (const playerData of playersToInsert) {
-      const existing = await db.select().from(players).where(eq(players.name, playerData.name)).limit(1);
+      const existing = await db.select().from(players).where(and(eq(players.name, playerData.name), isNull(players.leagueId))).limit(1);
       if (existing.length === 0) {
         await db.insert(players).values(playerData);
       }

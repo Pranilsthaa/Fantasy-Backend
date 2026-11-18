@@ -1,3 +1,5 @@
+export * from './cricket-scoring';
+import * as cricketSchema from './cricket-scoring';
 export * from './auth-sessions';
 export * from './tournaments';
 export * from './statistics';
@@ -19,6 +21,7 @@ import * as fantasySchema from './fantasy';
 import * as authSchema from './auth-sessions';
 
 export const schema = {
+  ...cricketSchema,
   ...authSchema,
   ...tournamentSchema,
   ...statisticsSchema,
