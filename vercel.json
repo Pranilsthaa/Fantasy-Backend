@@ -1,6 +1,7 @@
 {
   "version": 2,
   "framework": "nestjs",
+  "bunVersion": "1.x",
   "routes": [
     {
       "src": "/(.*)",
