@@ -1,3 +1,5 @@
+import { isNull } from 'drizzle-orm';
+import { matches } from '../../db/matches';
 import { Inject, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
 
@@ -7,6 +9,7 @@ export class MatchesService {
 
   findAll() {
     return this.database.db.query.matches.findMany({
+    where: isNull(matches.tournamentId),
     columns: {
       id: true,
       matchNumber: true,

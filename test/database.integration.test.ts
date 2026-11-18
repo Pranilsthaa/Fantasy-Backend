@@ -52,14 +52,14 @@ describe.skipIf(!enabled)('PostgreSQL migration and fantasy schema', () => {
     for (const item of previous.entries) copyFileSync(`drizzle/${item.tag}.sql`, join(tempMigrations, `${item.tag}.sql`));
     await migrate(db, { migrationsFolder: tempMigrations });
     await db.insert(tables.users).values({ id: userId, username: `test-${userId}`, email: `${userId}@example.invalid`, passwordHash: 'test-only' });
-    await db.insert(tables.teams).values([
-      { id: teamA, code: teamA.slice(0, 5), name: `A-${teamA}`, logo: 'a.png' },
-      { id: teamB, code: teamB.slice(0, 5), name: `B-${teamB}`, logo: 'b.png' },
-    ]);
-    await db.insert(tables.players).values([
-      { id: playerA, team_id: teamA, name: 'Verified player A', role: 'BAT', price: 10 },
-      { id: playerB, team_id: teamB, name: 'Verified player B', role: 'BWL', price: 9 },
-    ]);
+    await pool.query(
+      'insert into teams (id,code,name,logo) values ($1,$2,$3,$4),($5,$6,$7,$8)',
+      [teamA, teamA.slice(0, 5), `A-${teamA}`, 'a.png', teamB, teamB.slice(0, 5), `B-${teamB}`, 'b.png'],
+    );
+    await pool.query(
+      'insert into players (id,team_id,name,role,price) values ($1,$2,$3,$4,$5),($6,$7,$8,$9,$10)',
+      [playerA, teamA, 'Verified player A', 'BAT', 10, playerB, teamB, 'Verified player B', 'BWL', 9],
+    );
     await pool.query('insert into matches (id, match_number, team1_id, team2_id, venue, date) values ($1, $2, $3, $4, $5, now())', [legacyMatch, 900001, teamA, teamB, 'Legacy ground']);
     await migrate(db, { migrationsFolder: 'drizzle' });
 
@@ -301,6 +301,255 @@ describe.skipIf(!enabled)('PostgreSQL migration and fantasy schema', () => {
       await pool.query('delete from users where id=any($1::uuid[])', [[adminId, scorerId, outsiderId]]);
     }
   }, 60000);
+
+  it('manages season rosters and publishes fixtures without exposing draft schedules', async () => {
+    const sessionId = id(), scorerId = id(), scorerSessionId = id();
+    const leagueIds: string[] = [];
+    const ownerToken = await new JwtService().signAsync(
+      { sub: userId, sid: sessionId, tokenUse: 'access' },
+      { secret: process.env.JWT_SECRET!, issuer: 'local-fantasy-api', audience: 'local-fantasy-clients', algorithm: 'HS256', expiresIn: 900 },
+    );
+    const scorerToken = await new JwtService().signAsync(
+      { sub: scorerId, sid: scorerSessionId, tokenUse: 'access' },
+      { secret: process.env.JWT_SECRET!, issuer: 'local-fantasy-api', audience: 'local-fantasy-clients', algorithm: 'HS256', expiresIn: 900 },
+    );
+    const call = (method: string, path: string, body?: object, token = ownerToken) => fetch(`${origin}${path}`, {
+      method,
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: body && JSON.stringify(body),
+    });
+    const create = async (path: string, body: object) => {
+      const response = await call('POST', path, body);
+      if (response.status !== 201) throw new Error(`Create ${path} returned ${response.status}: ${await response.text()}`);
+      return await response.json() as { id: string };
+    };
+
+    try {
+      await pool.query("insert into auth_sessions (id,user_id,refresh_token_hash,expires_at) values ($1,$2,$3,now()+interval '1 day')", [sessionId, userId, randomBytes(32).toString('hex')]);
+      const local = await create('/api/leagues', { name: 'Roster trial' });
+      leagueIds.push(local.id);
+      await pool.query('insert into users (id,username,email,password_hash) values ($1,$2,$3,$4)', [scorerId, `scorer-${scorerId}`, `${scorerId}@example.invalid`, 'test-only']);
+      await pool.query("insert into auth_sessions (id,user_id,refresh_token_hash,expires_at) values ($1,$2,$3,now()+interval '1 day')", [scorerSessionId, scorerId, randomBytes(32).toString('hex')]);
+      await pool.query("insert into league_members (league_id,user_id,role) values ($1,$2,'scorer')", [local.id, scorerId]);
+      const independent = await create('/api/leagues', { name: 'Independent league' });
+      leagueIds.push(independent.id);
+      const base = `/api/leagues/${local.id}`;
+      const first = await create(`${base}/tournaments`, { name: 'First', season: '2026' });
+      const next = await create(`${base}/tournaments`, { name: 'Next', season: '2027' });
+      const a = await create(`${base}/teams`, { name: 'Home XI', code: 'HOME' });
+      const b = await create(`${base}/teams`, { name: 'Away XI', code: 'AWAY' });
+      const foreignTeam = await create(`/api/leagues/${independent.id}/teams`, { name: 'Home XI', code: 'HOME' });
+      expect((await call('POST', `${base}/teams`, { name: 'home xi', code: 'HX' })).status).toBe(409);
+      const player = await create(`${base}/players`, { name: 'Roster-only Ram', role: 'BAT' });
+      expect((await call('PATCH', `${base}/players/${player.id}`, { name: null })).status).toBe(400);
+      const year1 = `${base}/tournaments/${first.id}`;
+      const year2 = `${base}/tournaments/${next.id}`;
+      expect((await call('PUT', `${year1}/teams/${foreignTeam.id}`)).status).toBe(404);
+      expect((await call('PUT', `${year1}/players/${player.id}`, { teamId: a.id })).status).toBe(404);
+      for (const [path, team] of [[year1, a], [year1, b], [year2, b]] as const) {
+        expect((await call('PUT', `${path}/teams/${team.id}`)).status).toBe(204);
+      }
+      expect((await call('PUT', `${year1}/players/${player.id}`, { teamId: a.id, price: 12 })).status).toBe(400);
+      expect((await call('PUT', `${year1}/players/${player.id}`, { teamId: a.id })).status).toBe(204);
+      expect((await call('PUT', `${year2}/players/${player.id}`, { teamId: b.id, role: 'AR' })).status).toBe(204);
+      const oldRoster = await (await call('GET', `${year1}/players`)).json() as { data: { id: string }[] };
+      const newRoster = await (await call('GET', `${year2}/players`)).json();
+      expect(oldRoster.data).toMatchObject([{ playerId: player.id, teamId: a.id, role: 'BAT' }]);
+      expect(newRoster).toMatchObject({ data: [{ playerId: player.id, teamId: b.id, role: 'AR' }] });
+      expect((await call('DELETE', `${year1}/teams/${a.id}`)).status).toBe(409);
+      const staffSchedule = `${year1}/schedule`;
+      const publicSchedule = `${origin}/api/tournaments/${first.id}/schedule`;
+      const reportBase = `${origin}/api/tournaments/${first.id}/reports`;
+      const report = async (path: string) => {
+        const response = await fetch(`${reportBase}/${path}`);
+        if (response.status !== 200) throw new Error(`Report ${path} returned ${response.status}: ${await response.text()}`);
+        return await response.json();
+      };
+      for (const path of ['results', 'standings', 'players']) {
+        expect((await fetch(`${reportBase}/${path}`)).status).toBe(404);
+      }
+      const details = { matchNumber: 1, team1Id: a.id, team2Id: b.id, date: '2030-02-01T10:00:00+05:45', venue: 'Ground' };
+      expect((await fetch(publicSchedule)).status).toBe(404);
+      expect((await fetch(`${origin}${staffSchedule}`)).status).toBe(401);
+      expect((await call('PUT', `${staffSchedule}/publish`)).status).toBe(409);
+      expect((await call('POST', `${staffSchedule}/fixtures`, { ...details, team2Id: a.id })).status).toBe(400);
+      expect((await call('POST', `${staffSchedule}/fixtures`, { ...details, team2Id: foreignTeam.id })).status).toBe(400);
+      const temporary = await create(`${staffSchedule}/fixtures`, { ...details, matchNumber: 2 });
+      expect((await call('DELETE', `${staffSchedule}/fixtures/${temporary.id}`)).status).toBe(204);
+      const { id: fixture } = await create(`${staffSchedule}/fixtures`, details);
+      expect((await call('POST', `${staffSchedule}/fixtures`, details)).status).toBe(409);
+      expect((await call('PATCH', `${year2}/schedule/fixtures/${fixture}`, { venue: 'Wrong tournament' })).status).toBe(404);
+      expect((await call('PATCH', `${staffSchedule}/fixtures/${fixture}`, { venue: 'New Ground' })).status).toBe(204);
+      expect((await call('PATCH', `${staffSchedule}/fixtures/${fixture}/status`, { status: 'live' })).status).toBe(409);
+      const draftSchedule = await call('GET', staffSchedule);
+      expect(await draftSchedule.json()).toMatchObject({ publishedAt: null, data: [{ id: fixture, venue: 'New Ground' }] });
+      expect((await fetch(publicSchedule)).status).toBe(404);
+
+      const published = await call('PUT', `${staffSchedule}/publish`);
+      expect(published.status).toBe(200);
+      expect(await report('results')).toMatchObject({ data: [] });
+      expect(await report('standings')).toMatchObject({ data: [
+        { rank: 1, team: { id: b.id }, played: 0, points: 0, netRunRate: null },
+        { rank: 1, team: { id: a.id }, played: 0, points: 0, netRunRate: null },
+      ] });
+      expect((await fetch(`${reportBase}/players?category=invalid`)).status).toBe(400);
+      const publishedBody = await published.json();
+      const repeated = await call('PUT', `${staffSchedule}/publish`);
+      expect(await repeated.json()).toEqual(publishedBody);
+      const visible = await fetch(publicSchedule);
+      expect(visible.status).toBe(200);
+      expect(await visible.json()).toMatchObject({
+        timezone: 'Asia/Kathmandu',
+        data: [{ id: fixture, venue: 'New Ground', date: '2030-02-01T04:15:00.000Z', team1: { id: a.id }, team2: { id: b.id }, status: 'upcoming' }],
+      });
+      expect((await call('DELETE', `${staffSchedule}/fixtures/${fixture}`)).status).toBe(409);
+      expect((await call('PATCH', `${staffSchedule}/fixtures/${fixture}/status`, { status: 'live' })).status).toBe(204);
+      expect((await call('PATCH', `${staffSchedule}/fixtures/${fixture}`, { venue: 'Late change' })).status).toBe(409);
+      expect((await call('PATCH', `${staffSchedule}/fixtures/${fixture}/status`, { status: 'cancelled' })).status).toBe(204);
+      expect((await call('PATCH', `${staffSchedule}/fixtures/${fixture}/status`, { status: 'live' })).status).toBe(409);
+      expect(await (await fetch(publicSchedule)).json()).toMatchObject({ data: [{ id: fixture, status: 'cancelled' }] });
+      const homePartner = await create(`${base}/players`, { name: 'Home partner', role: 'AR' });
+      const awayBowler = await create(`${base}/players`, { name: 'Away bowler', role: 'BWL' });
+      const awayKeeper = await create(`${base}/players`, { name: 'Away keeper', role: 'WK' });
+      for (const [profile, teamId] of [[homePartner, a.id], [awayBowler, b.id], [awayKeeper, b.id]] as const) {
+        expect((await call('PUT', `${year1}/players/${profile.id}`, { teamId })).status).toBe(204);
+      }
+      const roster = await (await call('GET', `${year1}/players`)).json() as { data: { id: string; playerId: string }[] };
+      const registration = (profile: { id: string }) => roster.data.find((row) => row.playerId === profile.id)!.id;
+      const ram = registration(player), partner = registration(homePartner);
+      const bowler = registration(awayBowler), keeper = registration(awayKeeper);
+      const scoredFixture = await create(`${staffSchedule}/fixtures`, { ...details, matchNumber: 3 });
+      const staffCard = `${staffSchedule}/fixtures/${scoredFixture.id}/scorecard`;
+      const publicCard = `${origin}/api/tournaments/${first.id}/fixtures/${scoredFixture.id}/scorecard`;
+      expect((await fetch(publicCard)).status).toBe(404);
+      expect((await call('PATCH', `${staffSchedule}/fixtures/${scoredFixture.id}/status`, { status: 'live' })).status).toBe(204);
+      const setup = await call('PUT', `${staffCard}/lineups`, { overs: 1, team1: [ram, partner], team2: [bowler, keeper] }, scorerToken);
+      expect(setup.status).toBe(200);
+      let version = 0;
+      const play = async (path: string, data: object, method = 'POST') => {
+        const token = path === 'publish' || path === 'correction' ? ownerToken : scorerToken;
+        const response = await call(method, `${staffCard}/${path}`, { ...data, version }, token);
+        if (response.status !== 200) throw new Error(`${path} failed with ${response.status}: ${await response.text()}`);
+        const result = await response.json() as { version: number; revision?: number; winnerTeamId?: string };
+        version = result.version;
+        return result;
+      };
+      await play('innings', { teamId: a.id, strikerId: ram, nonStrikerId: partner });
+      await play('bowler', { playerId: bowler }, 'PUT');
+      const competing = await Promise.all([
+        call('POST', `${staffCard}/deliveries`, { version, batRuns: 1 }),
+        call('POST', `${staffCard}/deliveries`, { version, batRuns: 1 }),
+      ]);
+      expect(competing.map((response) => response.status).sort()).toEqual([200, 409]);
+      version++;
+      await play('deliveries', { batRuns: 0, extra: 'wide' });
+      await play('deliveries', { batRuns: 0, extra: 'no_ball' });
+      const invalidWicket = await call('POST', `${staffCard}/deliveries`, { version, batRuns: 0, dismissal: 'bowled', dismissedPlayerId: partner });
+      expect(invalidWicket.status).toBe(400);
+      expect(await (await fetch(publicCard)).json()).toMatchObject({
+        official: null, innings: [{ runs: 3, extras: 2, legalBalls: 1, strikerId: partner, bowlerId: bowler, freeHit: true }],
+      });
+      await play('deliveries', { batRuns: 0 });
+      await play('deliveries', { batRuns: 0, dismissal: 'caught', dismissedPlayerId: partner, fielderIds: [keeper] });
+      await play('innings', { teamId: b.id, strikerId: keeper, nonStrikerId: bowler });
+      await play('bowler', { playerId: ram }, 'PUT');
+      await play('deliveries', { batRuns: 4, boundary: 4 });
+      expect((await call('POST', `${staffCard}/publish`, { version }, scorerToken)).status).toBe(403);
+      const result = await play('publish', {});
+      expect(result).toMatchObject({ revision: 1, winnerTeamId: b.id });
+      expect(await (await fetch(publicCard)).json()).toMatchObject({ status: 'completed', official: { revision: 1 }, innings: [{ runs: 3 }, { runs: 4, closed: true }] });
+      expect(await report('standings')).toMatchObject({ data: [
+        { rank: 1, team: { id: b.id }, points: 2, netRunRate: 21, netRunRateMatches: 1 },
+        { rank: 2, team: { id: a.id }, points: 0, netRunRate: -21, netRunRateMatches: 1 },
+      ] });
+      await play('correction', {});
+      await play('undo', {});
+      expect(await (await fetch(publicCard)).json()).toMatchObject({ official: { revision: 1 }, innings: [{ runs: 3 }, { runs: 4 }] });
+      expect(await (await call('GET', staffCard)).json()).toMatchObject({ correcting: true, innings: [{ runs: 3 }, { runs: 0 }] });
+      expect(await report('results')).toMatchObject({ data: [{ fixtureId: scoredFixture.id, revision: 1, innings: [{ runs: 3 }, { runs: 4 }] }] });
+      await play('deliveries', { batRuns: 6, boundary: 6 });
+      expect(await play('publish', {})).toMatchObject({ revision: 2, winnerTeamId: b.id });
+      const revisions = await pool.query('select revision, status, cricket_card from match_stat_revisions where match_id=$1 order by revision', [scoredFixture.id]);
+      expect(revisions.rows.map((row) => [row.revision, row.status, row.cricket_card.innings[1].runs])).toEqual([
+        [1, 'superseded', 4], [2, 'published', 6],
+      ]);
+      const stats = await pool.query(`
+        select s.value::int as value from player_match_stats s
+        join match_stat_revisions r on r.id=s.revision_id
+        join stat_definitions d on d.id=s.stat_definition_id
+        where r.match_id=$1 and r.status='published' and s.tournament_player_id=$2 and d.key='sixes'
+      `, [scoredFixture.id, keeper]);
+      expect(stats.rows).toEqual([{ value: 1 }]);
+
+      const returnFixture = await create(`${staffSchedule}/fixtures`, { ...details, matchNumber: 4 });
+      const abandonedFixture = await create(`${staffSchedule}/fixtures`, { ...details, matchNumber: 5 });
+      const returnRevision = id(), abandonedRevision = id();
+      await pool.query('insert into cricket_scoring (match_id,overs) values ($1,1),($2,1)', [returnFixture.id, abandonedFixture.id]);
+      await pool.query(
+        "insert into match_stat_revisions (id,match_id,tournament_id,revision,status,submitted_by,published_at) values ($1,$2,$3,1,'published',$4,now()),($5,$6,$3,1,'published',$4,now())",
+        [returnRevision, returnFixture.id, first.id, userId, abandonedRevision, abandonedFixture.id],
+      );
+      await pool.query(
+        "insert into match_results (revision_id,match_id,tournament_id,outcome,winner_team_id) values ($1,$2,$3,'team_win',$4),($5,$6,$3,'no_result',null)",
+        [returnRevision, returnFixture.id, first.id, a.id, abandonedRevision, abandonedFixture.id],
+      );
+      await pool.query(
+        'insert into cricket_innings (revision_id,match_id,tournament_id,number,batting_team_id,bowling_team_id,runs,wickets,legal_balls,extras) values ($1,$2,$3,1,$4,$5,10,0,6,0),($1,$2,$3,2,$5,$4,9,0,6,0),($6,$7,$3,1,$4,$5,100,0,6,0),($6,$7,$3,2,$5,$4,50,0,6,0)',
+        [returnRevision, returnFixture.id, first.id, a.id, b.id, abandonedRevision, abandonedFixture.id],
+      );
+      expect(await report('standings')).toMatchObject({ data: [
+        { rank: 1, team: { id: b.id }, played: 3, won: 1, lost: 1, noResult: 1, points: 3, netRunRate: 6.357, netRunRateMatches: 2 },
+        { rank: 2, team: { id: a.id }, played: 3, won: 1, lost: 1, noResult: 1, points: 3, netRunRate: -6.357, netRunRateMatches: 2 },
+      ] });
+      expect(await report('results')).toMatchObject({ data: [
+        { fixtureId: abandonedFixture.id, outcome: 'no_result' },
+        { fixtureId: returnFixture.id, winnerTeamId: a.id },
+        { fixtureId: scoredFixture.id, revision: 2, innings: [{ runs: 3 }, { runs: 6 }] },
+      ] });
+      expect(await report('players')).toMatchObject({ category: 'batting', data: [
+        { registrationId: keeper, matches: 1, rank: 1, metrics: { runs: 6, sixes: 1, fours: 0 }, strikeRate: 600 },
+        { registrationId: ram, rank: 2, metrics: { runs: 1 } },
+        { registrationId: partner, rank: 3, metrics: { runs: 0, balls_faced: 3 } },
+      ] });
+      expect(await report('players?category=bowling')).toMatchObject({ data: [
+        { registrationId: bowler, rank: 1, metrics: { wickets: 1, balls_bowled: 3 }, economy: 6 },
+        { registrationId: ram, rank: 2, metrics: { wickets: 0 }, economy: 36 },
+      ] });
+      expect(await report('players?category=fielding')).toMatchObject({ data: [
+        { registrationId: keeper, rank: 1, metrics: { catches: 1 }, dismissalsInvolved: 1 },
+      ] });
+      expect(await report('standings?page=2')).toMatchObject({ page: 2, pageSize: 20, data: [] });
+
+      await pool.query('insert into match_players (match_id,tournament_id,tournament_player_id) values ($1,$2,$3)', [fixture, first.id, oldRoster.data[0]!.id]);
+      expect((await call('PUT', `${year1}/players/${player.id}`, { teamId: b.id })).status).toBe(409);
+      expect((await call('DELETE', `${year1}/players/${player.id}`)).status).toBe(409);
+      expect((await call('DELETE', `${year2}/players/${player.id}`)).status).toBe(204);
+      expect((await call('DELETE', `${year2}/teams/${b.id}`)).status).toBe(204);
+      const legacy = await (await fetch(`${origin}/api/players`)).json() as { data: { id: string }[] };
+      expect(legacy.data.some((row) => row.id === player.id)).toBe(false);
+      expect(legacy.data.some((row) => row.id === playerA)).toBe(true);
+      const publicMatches = await (await fetch(`${origin}/api/matches`)).json() as { data: { id: string }[] };
+      expect(publicMatches.data.some((row) => row.id === fixture)).toBe(false);
+      expect(publicMatches.data.some((row) => row.id === legacyMatch)).toBe(true);
+    } finally {
+      for (const table of ['player_match_stats', 'cricket_innings', 'match_results', 'match_stat_revisions']) {
+        await pool.query(`delete from ${table} where tournament_id in (select id from tournaments where league_id=any($1::uuid[]))`, [leagueIds]);
+      }
+      for (const table of ['cricket_plays', 'cricket_scoring']) {
+        await pool.query(`delete from ${table} where match_id in (select m.id from matches m join tournaments t on t.id=m.tournament_id where t.league_id=any($1::uuid[]))`, [leagueIds]);
+      }
+      for (const table of ['match_players', 'matches', 'tournament_rounds', 'tournament_players', 'tournament_teams']) {
+        await pool.query(`delete from ${table} where tournament_id in (select id from tournaments where league_id=any($1::uuid[]))`, [leagueIds]);
+      }
+      await pool.query('delete from tournaments where league_id=any($1::uuid[])', [leagueIds]);
+      await pool.query('delete from players where league_id=any($1::uuid[])', [leagueIds]);
+      await pool.query('delete from teams where league_id=any($1::uuid[])', [leagueIds]);
+      await pool.query('delete from league_members where user_id=$1', [scorerId]);
+      await pool.query('delete from leagues where id=any($1::uuid[])', [leagueIds]);
+      await pool.query('delete from auth_sessions where id=any($1::uuid[])', [[sessionId, scorerSessionId]]);
+      await pool.query('delete from users where id=$1', [scorerId]);
+    }
+  }, 30000);
 
   it('keeps legacy fixtures unassigned after migration', async () => {
     const { rows } = await client.query('select tournament_id, round_id from matches where id = $1', [legacyMatch]);

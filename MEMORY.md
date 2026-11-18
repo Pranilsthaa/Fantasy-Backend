@@ -293,3 +293,18 @@ The PostgreSQL test covers public access, hidden drafts, NRR and all-out
 handling, equal points, no-results, leaderboard ordering, paging and correction
 publication. All 67 tests (441 assertions), build and typecheck passed. No
 migration was required for reports. The fantasy phase follows.
+
+## Fantasy entry and group decisions
+
+The user confirmed a single squad and season-wide transfer allowance per user
+per tournament. A player can join multiple private fantasy groups and each
+group ranks its own members using their shared tournament entry. Once organizers
+make fantasy available, any signed-in user may create a private group and invite
+friends through a shareable link. Tournament owners and admins control
+availability. Group creators manage invitations.
+
+The initial schema scopes entries, squads, transfers and scoring runs by group.
+The fantasy implementation needs to scope them by tournament and link groups
+through memberships that reference the shared entry. A league invitation grants
+membership in one group. It does not create a second squad or transfer allowance.
+The initial fantasy rule configuration and late-entry behavior are pending.

@@ -9,7 +9,7 @@ export function setupApiDocumentation(app: INestApplication) {
         "Register or log in under Authentication, copy the accessToken, and use Authorize to call protected endpoints. " +
         "Access JWTs last up to 15 minutes. Refresh credentials rotate and sessions expire after seven days. " +
         "Logout requires the latest refresh credential. Auth endpoints are rate limited. " +
-        "Only implemented endpoints are documented; league and draft tournament management are available; fantasy scoring APIs are future work.",
+        "Only implemented endpoints are documented; league, team, roster, schedule, cricket scoring and tournament reports are available; fantasy scoring APIs are future work.",
     )
     .setVersion("1.0.0")
     .addBearerAuth(
@@ -33,6 +33,20 @@ export function setupApiDocumentation(app: INestApplication) {
     "SetStaffDto",
     "CreateTournamentDto",
     "UpdateTournamentDto",
+    "CreateTeamDto",
+    "EditTeamDto",
+    "CreatePlayerDto",
+    "EditPlayerDto",
+    "RegisterPlayerDto",
+    "CreateFixtureDto",
+    "EditFixtureDto",
+    "FixtureStatusDto",
+    "SetLineupsDto",
+    "ScoreVersionDto",
+    "StartInningsDto",
+    "SelectPlayerDto",
+    "DeliveryDto",
+    "PublishResultDto",
   ]) {
     const schema = document.components?.schemas?.[name];
     if (schema && !("$ref" in schema)) schema.additionalProperties = false;
