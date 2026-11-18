@@ -82,7 +82,7 @@ export class LeaguesController {
   @ApiOperation({
     summary: "My leagues",
     description:
-      "Includes owned leagues and active admin/scorer memberships. Fantasy participation is a later checkpoint.",
+      "Includes owned leagues and active admin/scorer memberships. Each item includes the signed-in user’s viewerRole for that league.",
   })
   @ApiQuery({ name: "page", required: false, type: String, example: "1" })
   @ApiResponse({ status: 200, type: LeagueListDto })

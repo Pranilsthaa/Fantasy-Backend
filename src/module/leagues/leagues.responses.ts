@@ -38,9 +38,14 @@ export class StaffResponseDto {
   @ApiProperty({ type: String }) username!: string;
   @ApiProperty({ type: String, enum: ["admin", "scorer"] }) role!: string;
 }
+export class ManagedLeagueResponseDto extends LeagueResponseDto {
+  @ApiProperty({ type: String, enum: ["owner", "admin", "scorer"] })
+  viewerRole!: "owner" | "admin" | "scorer";
+}
+
 export class LeagueListDto {
-  @ApiProperty({ type: () => LeagueResponseDto, isArray: true })
-  data!: LeagueResponseDto[];
+  @ApiProperty({ type: () => ManagedLeagueResponseDto, isArray: true })
+  data!: ManagedLeagueResponseDto[];
   @ApiProperty({ type: Number }) page!: number;
   @ApiProperty({ type: Number, enum: [20] }) pageSize!: number;
 }

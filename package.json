@@ -1,6 +1,6 @@
 {
   "name": "be",
-  "type": "module",
+  "type": "commonjs",
   "private": true,
   "scripts": {
     "start": "bun run build && bun dist/main.js",

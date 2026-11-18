@@ -6,7 +6,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { and, asc, eq, exists, sql } from "drizzle-orm";
+import { and, asc, eq, getTableColumns, isNotNull, or, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { DatabaseService } from "../../database/database.service";
 import { leagueMembers, leagues, tournaments } from "../../db/tournaments";
@@ -52,22 +52,16 @@ export class LeaguesService {
 
   async list(userId: string, page: number) {
     const data = await this.db
-      .select()
+      .select({
+        ...getTableColumns(leagues),
+        viewerRole: sql<"owner" | "admin" | "scorer">`case when ${leagues.ownerId} = ${userId} then 'owner' else ${leagueMembers.role}::text end`,
+      })
       .from(leagues)
-      .where(
-        sql`${leagues.ownerId} = ${userId} OR ${exists(
-          this.db
-            .select({ id: leagueMembers.leagueId })
-            .from(leagueMembers)
-            .where(
-              and(
-                eq(leagueMembers.leagueId, leagues.id),
-                eq(leagueMembers.userId, userId),
-                eq(leagueMembers.isActive, true),
-              ),
-            ),
-        )}`,
+      .leftJoin(
+        leagueMembers,
+        and(eq(leagueMembers.leagueId, leagues.id), eq(leagueMembers.userId, userId), eq(leagueMembers.isActive, true)),
       )
+      .where(or(eq(leagues.ownerId, userId), isNotNull(leagueMembers.userId)))
       .orderBy(asc(leagues.createdAt), asc(leagues.id))
       .limit(20)
       .offset((page - 1) * 20);
