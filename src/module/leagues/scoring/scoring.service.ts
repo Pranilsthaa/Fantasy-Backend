@@ -212,6 +212,8 @@ export class ScoringService {
           outcome: published.outcome,
           winnerTeamId: published.winnerTeamId,
         };
+        // Once a scorecard is published, spectators see that snapshot until a correction is published.
+        // Staff see the current scoring state, including edits in progress.
         const card =
           !staff && published?.cricketCard
             ? published.cricketCard
@@ -227,6 +229,7 @@ export class ScoringService {
             : {}),
         };
       },
+      // Read the scorecard and its version from the same snapshot during concurrent scoring.
       { isolationLevel: "repeatable read", accessMode: "read only" },
     );
   }
